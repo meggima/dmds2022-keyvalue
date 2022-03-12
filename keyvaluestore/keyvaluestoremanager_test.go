@@ -89,6 +89,20 @@ func TestOpenShouldReturnStoreWhenStoreExists(t *testing.T) {
 	assert.NotNil(kv)
 }
 
+func TestCloseShouldNotReturnError(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	keyValueManager := KeyValueStoreManager{}
+	_ = keyValueManager.Create("/tmp", 0)
+	kv, _ := keyValueManager.Open("/tmp")
+
+	// Act
+	err := keyValueManager.Close(kv)
+
+	// Assert
+	assert.NoError(err)
+}
+
 func TestDeleteShouldReturnErrorWhenKeyValueStoreNotExists(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)

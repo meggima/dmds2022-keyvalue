@@ -13,6 +13,10 @@ func (kv *KeyValueStoreManager) Open(directoryName string) (KeyValueStoreAccesso
 	return nil, keyvaluestore.ErrNotImplemented
 }
 
+func (kv *KeyValueStoreManager) Close(accessor KeyValueStoreAccessor) error {
+	return keyvaluestore.ErrNotImplemented
+}
+
 func (kv *KeyValueStoreManager) Delete(directoryName string) error {
 	return keyvaluestore.ErrNotImplemented
 }
