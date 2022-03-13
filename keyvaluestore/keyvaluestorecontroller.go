@@ -1,5 +1,6 @@
 package keyvaluestore
 
+// An interface to manage key value stores
 type KeyValueStoreController interface {
 
 	// Create a new key value store in the specified directory using the given memory size (in MB).
@@ -12,6 +13,10 @@ type KeyValueStoreController interface {
 	// Returns a key value store object.
 	// If no key value store exists in the current directory the function returns an error.
 	Open(directoryName string) (KeyValueStoreAccessor, error)
+
+	// Close the key value store.
+	// Returns an error if something goes wrong.
+	Close(keyValueStore KeyValueStoreAccessor) error
 
 	// Deletes the key value store in the specified directory.
 	// If no key value store exists in the current directory the function returns an error.
