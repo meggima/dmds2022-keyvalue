@@ -11,20 +11,14 @@ func New() *KeyValueStore {
 }
 
 func (kv *KeyValueStore) Put(key uint64, value [10]byte) error {
-	item := &kvEntry{
-		key:   key,
-		value: value,
-	}
-	return kv.tree.Put(item)
+	return kv.tree.Put(key, &value)
 }
 
-func (kv *KeyValueStore) Get(key uint64) ([10]byte, error) {
-	item := &kvKey{
-		key: key,
-	}
-	val, err := kv.tree.Get(item)
+func (kv *KeyValueStore) Get(key uint64) (*[10]byte, error) {
+	val, err := kv.tree.Get(key)
 	if err != nil {
-		return [10]byte{}, err
+		return nil, err
 	}
-	return val.(kvEntry).value, nil
+
+	return val, nil
 }
