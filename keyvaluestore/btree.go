@@ -1,105 +1,138 @@
 package keyvaluestore
 
+import "errors"
+
 const (
 	MAX_DEGREE = 4 // TODO calculate degree based on chosen page size and size of a kvEntry
 )
 
 type bTree struct {
-	root *node
+	root       *node
+	nextNodeId uint64
 }
 
 type node struct {
-	items    []item
+	nodeId   uint64
+	n        int // Number of keys
+	keys     []uint64
+	values   [][10]byte
 	children []*node
-}
-
-type item interface {
-	Less(than item) bool
-}
-
-// implementations of Item
-type kvEntry struct {
-	key   uint64
-	value [10]byte
-}
-
-func (a kvEntry) Less(b item) bool {
-	e, ok := b.(kvEntry)
-	if ok {
-		return a.key < e.key
-	}
-	k, ok := b.(kvKey)
-	if ok {
-		return a.key < k.key
-	}
-	return false
-}
-
-type kvKey struct {
-	key uint64
-}
-
-func (a kvKey) Less(b item) bool {
-	e, ok := b.(kvEntry)
-	if ok {
-		return a.key < e.key
-	}
-	k, ok := b.(kvKey)
-	if ok {
-		return a.key < k.key
-	}
-	return false
+	isLeaf   bool
+	next     *node
 }
 
 func NewTree() *bTree {
-	return &bTree{
-		root: &node{
-			items:    []item{},
-			children: []*node{},
-		},
+	var tree = &bTree{
+		nextNodeId: 0,
 	}
+
+	tree.Init()
+
+	return tree
 }
 
-func (t *bTree) Put(item item) error {
-	n := t.root
+func (t *bTree) Init() {
+	t.root = t.NewLeaf()
+}
 
-	// traverse tree to matching leaf
-	for len(n.children) > 0 {
-		n = n.children[0]
-		for i := 0; i < len(n.items); i++ {
-			if n.items[i].Less(item) {
-				n = n.children[i+1]
+func (t *bTree) NewNode() *node {
+	var node *node = &node{
+		nodeId:   t.nextNodeId,
+		n:        0,
+		keys:     make([]uint64, MAX_DEGREE),
+		values:   make([][10]byte, MAX_DEGREE),
+		children: make([]*node, MAX_DEGREE+1), // Note the +1 as we have one child pointer more than keys
+		isLeaf:   false,
+		next:     nil,
+	}
+
+	t.nextNodeId += 1
+
+	return node
+}
+
+func (t *bTree) NewLeaf() *node {
+	var node *node = &node{
+		nodeId:   t.nextNodeId,
+		n:        0,
+		keys:     make([]uint64, MAX_DEGREE),
+		values:   make([][10]byte, MAX_DEGREE),
+		children: make([]*node, MAX_DEGREE),
+		isLeaf:   true,
+		next:     nil,
+	}
+
+	t.nextNodeId += 1
+
+	return node
+}
+
+func (t *bTree) Find(key uint64, errorIfExists bool) (*node, int, error) {
+	return t.root.Find(key, errorIfExists)
+}
+
+func (n *node) Find(key uint64, errorIfExists bool) (*node, int, error) {
+	if n.isLeaf {
+		return n.FindInLeaf(key, errorIfExists)
+	} else {
+		// Falls into the leftmost child
+		if key < n.keys[0] {
+			// The leftmost child always exists at this point
+			return n.children[0].Find(key, errorIfExists)
+		}
+
+		// Falls into the rightmost child
+		if key >= n.keys[n.n-1] {
+			return n.children[n.n].Find(key, errorIfExists)
+		}
+
+		// Falls into one of the intermediate children
+		var i int = 1
+
+		for i < n.n {
+			if key > n.keys[i] {
+				i++
 			} else {
 				break
 			}
 		}
+
+		return n.children[i].Find(key, errorIfExists)
 	}
+}
 
-	if len(n.items) < MAX_DEGREE-1 {
-		// leaf has space, insert item
-		index := 0
-		for ; index < len(n.items); index++ {
-			if !n.items[index].Less(item) {
-				break
-			}
-		}
+func (n *node) FindInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
+	var i int = 0
 
-		if len(n.items) == index {
-			n.items = append(n.items, item)
+	for i < n.n {
+		if key > n.keys[i] {
+			i++
 		} else {
-			n.items = append(n.items[:index+1], n.items[index:]...)
-			n.items[index] = item
+			break
 		}
 	}
-	if len(n.items) == MAX_DEGREE-1 {
-		// leaf is full, split node
 
-		// TODO
+	if n.keys[i] == key {
+		if errorIfExists {
+			return n, i, errors.New("key already exists")
+		} else {
+			return n, i, nil
+		}
+	} else {
+		return n, i, nil
 	}
+}
 
+func (t *bTree) Put(key uint64, value *[10]byte) error {
 	return nil
 }
 
-func (t *bTree) Get(key item) (item, error) {
-	return nil, nil
+func (t *bTree) Get(key uint64) (*[10]byte, error) {
+	n, i, _ := t.Find(key, false)
+
+	if n.isLeaf && n.keys[i] == key {
+		return &(n.values[i]), nil
+	}
+
+	return nil, errors.New("key does not exist")
 }
