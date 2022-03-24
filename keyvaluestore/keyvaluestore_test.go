@@ -16,8 +16,7 @@ func TestMain(m *testing.M) {
 	keyValueManager := KeyValueStoreManager{}
 	keyValueManager.Delete("/tmp")
 	keyValueManager.Create("/tmp", 100)
-	//kv, _ = keyValueManager.Open("/tmp")
-	kv = &KeyValueStore{}
+	kv, _ = keyValueManager.Open("/tmp")
 	m.Run()
 }
 

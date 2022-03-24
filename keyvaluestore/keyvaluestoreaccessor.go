@@ -9,5 +9,5 @@ type KeyValueStoreAccessor interface {
 	// Get the value for the given key from the store.
 	// Returns the value or an error if the given key does not exist in the store
 	// or something went wrong.
-	Get(key uint64) (*[10]byte, error)
+	Get(key uint64) ([10]byte, error)
 }
