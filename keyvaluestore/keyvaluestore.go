@@ -11,7 +11,7 @@ func New() *KeyValueStore {
 }
 
 func (kv *KeyValueStore) Put(key uint64, value [10]byte) error {
-	return kv.tree.Put(key, &value)
+	return kv.tree.Put(key, value)
 }
 
 func (kv *KeyValueStore) Get(key uint64) (*[10]byte, error) {

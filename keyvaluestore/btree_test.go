@@ -16,6 +16,7 @@ func TestNewTreeShouldCreateTree(t *testing.T) {
 	// Assert
 	assert.NotNil(tree.root)
 	assert.Equal(0, tree.root.n)
+	assert.True(tree.root.isLeaf)
 }
 
 func TestFindNonExistingKeyEmptyTree(t *testing.T) {
@@ -56,12 +57,14 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 2
 	leaf1.keys[0] = 5
 	leaf1.keys[1] = 10
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
 	leaf2.keys[0] = 20
@@ -90,12 +93,14 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 2
 	leaf1.keys[0] = 6
 	leaf1.keys[1] = 10
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
@@ -103,8 +108,8 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	leaf1.next = leaf2
 
 	tree.root.n = 1
-	tree.root.keys[0] = 11
 	tree.root.isLeaf = false
+	tree.root.keys[0] = 11
 	tree.root.children = make([]*node, MAX_DEGREE+1)
 	tree.root.children[0] = leaf1
 	tree.root.children[1] = leaf2
@@ -124,13 +129,15 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 3
 	leaf1.keys[0] = 1
 	leaf1.keys[1] = 5
 	leaf1.keys[2] = 10
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
@@ -138,8 +145,8 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	leaf1.next = leaf2
 
 	tree.root.n = 1
-	tree.root.keys[0] = 11
 	tree.root.isLeaf = false
+	tree.root.keys[0] = 11
 	tree.root.children = make([]*node, MAX_DEGREE+1)
 	tree.root.children[0] = leaf1
 	tree.root.children[1] = leaf2
@@ -159,17 +166,20 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 2
 	leaf1.keys[0] = 5
 	leaf1.keys[1] = 10
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
 
-	var leaf3 *node = tree.NewLeaf()
+	var leaf3 *node = tree.NewNode()
+	leaf3.isLeaf = true
 	leaf3.n = 2
 	leaf3.keys[0] = 25
 	leaf3.keys[1] = 30
@@ -178,9 +188,9 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	leaf2.next = leaf3
 
 	tree.root.n = 2
+	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
-	tree.root.isLeaf = false
 	tree.root.children = make([]*node, MAX_DEGREE+1)
 	tree.root.children[0] = leaf1
 	tree.root.children[1] = leaf2
@@ -201,26 +211,29 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 2
 	leaf1.keys[0] = 1
 	leaf1.keys[1] = 10
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
 
-	var leaf3 *node = tree.NewLeaf()
+	var leaf3 *node = tree.NewNode()
+	leaf3.isLeaf = true
 	leaf3.n = 2
 	leaf3.keys[0] = 25
 	leaf3.keys[1] = 30
 
 	tree.root.n = 2
+	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
 	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.isLeaf = false
 	tree.root.children[0] = leaf1
 	tree.root.children[1] = leaf2
 	tree.root.children[2] = leaf3
@@ -246,17 +259,20 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 
 	var tree *bTree = NewTree()
 
-	var leaf1 *node = tree.NewLeaf()
+	var leaf1 *node = tree.NewNode()
+	leaf1.isLeaf = true
 	leaf1.n = 2
 	leaf1.keys[0] = 7
 	leaf1.keys[1] = 8
 
-	var leaf2 *node = tree.NewLeaf()
+	var leaf2 *node = tree.NewNode()
+	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 10
 	leaf2.keys[1] = 11
 
-	var leaf3 *node = tree.NewLeaf()
+	var leaf3 *node = tree.NewNode()
+	leaf3.isLeaf = true
 	leaf3.n = 2
 	leaf3.keys[0] = 15
 	leaf3.keys[1] = 16
@@ -269,12 +285,14 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	inner1.children[1] = leaf2
 	inner1.children[2] = leaf3
 
-	var leaf4 *node = tree.NewLeaf()
+	var leaf4 *node = tree.NewNode()
+	leaf4.isLeaf = true
 	leaf4.n = 2
 	leaf4.keys[0] = 17
 	leaf4.keys[1] = 20
 
-	var leaf5 *node = tree.NewLeaf()
+	var leaf5 *node = tree.NewNode()
+	leaf5.isLeaf = true
 	leaf5.n = 2
 	leaf5.keys[0] = 30
 	leaf5.keys[1] = 40
@@ -294,9 +312,9 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	inner1.next = inner2
 
 	tree.root.n = 1
+	tree.root.isLeaf = false
 	tree.root.keys[0] = 17
 	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.isLeaf = false
 	tree.root.children[0] = inner1
 	tree.root.children[1] = inner2
 
