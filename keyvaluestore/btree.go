@@ -23,7 +23,7 @@ type node struct {
 	isLeaf   bool
 	next     *node
 	parent   *node
-	tree	 *bTree
+	tree     *bTree
 }
 
 func NewTree() *bTree {
@@ -45,12 +45,13 @@ func (t *bTree) NewNode() *node {
 	var node *node = &node{
 		nodeId:   t.nextNodeId,
 		n:        0,
-		keys:     make([]uint64, MAX_DEGREE), // The arrays are one element larger than they need 
+		keys:     make([]uint64, MAX_DEGREE),   // The arrays are one element larger than they need
 		values:   make([][10]byte, MAX_DEGREE), // to be to allow overfilling them while inserting new keys.
-		children: make([]*node, MAX_DEGREE + 1), // Note the +1 as we have one child pointer more than keys.
+		children: make([]*node, MAX_DEGREE+1),  // Note the +1 as we have one child pointer more than keys.
 		isLeaf:   false,
-		parent:	  nil,
 		next:     nil,
+		parent:   nil,
+		tree:     t,
 	}
 
 	t.nextNodeId += 1
@@ -169,11 +170,12 @@ func (n *node) splitNode() error {
 		newNode.n = newIndex
 	} else {
 		newIndex := 0
-		leftSize := int(math.Ceil(float64(n.n) / 2)) - 1
+		leftSize := int(math.Ceil(float64(n.n)/2)) - 1
 		for j := leftSize + 1; j < n.n; j++ {
 			newNode.keys[newIndex] = n.keys[j]
+			newNode.children[newIndex+1] = n.children[j+1]
 			n.keys[j] = 0
-			n.children[j] = nil
+			n.children[j+1] = nil
 			newIndex++
 		}
 		n.keys[leftSize] = 0 // remove middle key, it isn't needed anymore
@@ -197,10 +199,11 @@ func (n *node) splitNode() error {
 		root := n.tree.NewNode()
 		n.tree.root = root
 		root.children[0] = n
-		root.children[0] = &newNode
+		root.children[1] = &newNode
 		root.keys[0] = newNode.keys[0]
-		n.parent = n.tree.root
-		newNode.parent = n.tree.root
+		root.n = 1
+		n.parent = root
+		newNode.parent = root
 	}
 	return nil
 }
@@ -220,7 +223,7 @@ func (n *node) appendChildNode(child *node) error {
 		// insert rightmost key/child
 		if key >= n.keys[n.n-1] {
 			n.keys[n.n] = key
-			n.children[n.n + 1] = child
+			n.children[n.n+1] = child
 			n.n++
 		} else if key < n.keys[0] {
 			n.children[n.n+1] = n.children[n.n]
@@ -235,7 +238,7 @@ func (n *node) appendChildNode(child *node) error {
 			// find index to insert child
 			var i int = 1
 
-			for i < n.n - 1{
+			for i < n.n-1 {
 				if key > n.keys[i] {
 					i++
 				} else {
@@ -252,7 +255,7 @@ func (n *node) appendChildNode(child *node) error {
 			n.children[i+1] = child
 			n.n++
 		}
-		
+
 		// node is over-full after insertion. split it
 		if n.n == MAX_DEGREE {
 			return n.splitNode()
@@ -265,12 +268,12 @@ func (n *node) appendChildNode(child *node) error {
 	return nil
 }
 
-func (t *bTree) Get(key uint64) (*[10]byte, error) {
+func (t *bTree) Get(key uint64) ([10]byte, error) {
 	n, i, _ := t.Find(key, false)
 
 	if n.isLeaf && n.keys[i] == key {
-		return &(n.values[i]), nil
+		return (n.values[i]), nil
 	}
 
-	return nil, errors.New("key does not exist")
+	return [10]byte{}, errors.New("key does not exist")
 }
