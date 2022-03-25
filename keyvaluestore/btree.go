@@ -2,11 +2,14 @@ package keyvaluestore
 
 import (
 	"errors"
+	"fmt"
+	keyvaluestore "keyvaluestore/keyvaluestore/errors"
 	"math"
+	"strings"
 )
 
 const (
-	MAX_DEGREE = 4 // TODO calculate degree based on chosen page size and size of a kvEntry
+	MAX_DEGREE = 6 // TODO calculate degree based on chosen page size and size of a kvEntry
 )
 
 type bTree struct {
@@ -82,7 +85,7 @@ func (n *node) Find(key uint64, errorIfExists bool) (*node, int, error) {
 		var i int = 1
 
 		for i < n.n {
-			if key > n.keys[i] {
+			if key >= n.keys[i] {
 				i++
 			} else {
 				break
@@ -122,7 +125,9 @@ func (t *bTree) Put(key uint64, value [10]byte) error {
 		return errors.New("no leaf found for inserting")
 	}
 
-	return n.insertValueToLeaf(key, value, i)
+	err := n.insertValueToLeaf(key, value, i)
+	t.Print()
+	return err
 }
 
 func (n *node) insertValueToLeaf(key uint64, value [10]byte, index int) error {
@@ -170,19 +175,27 @@ func (n *node) splitNode() error {
 		newNode.n = newIndex
 	} else {
 		newIndex := 0
-		leftSize := int(math.Ceil(float64(n.n)/2)) - 1
+		leftSize := int(math.Floor(float64(n.n) / 2))
 		for j := leftSize + 1; j < n.n; j++ {
 			newNode.keys[newIndex] = n.keys[j]
-			newNode.children[newIndex+1] = n.children[j+1]
+			newNode.children[newIndex] = n.children[j]
 			n.keys[j] = 0
-			n.children[j+1] = nil
+			n.children[j] = nil
 			newIndex++
 		}
 		n.keys[leftSize] = 0 // remove middle key, it isn't needed anymore
 
 		// move the last child manually
-		newNode.children[newIndex+1] = n.children[n.n]
+		newNode.children[newIndex] = n.children[n.n]
 		n.children[n.n] = nil
+
+		// updated the parent for all moved children
+		for _, c := range newNode.children {
+			if c == nil {
+				continue
+			}
+			c.parent = &newNode
+		}
 
 		n.n = leftSize
 		newNode.n = newIndex
@@ -200,12 +213,20 @@ func (n *node) splitNode() error {
 		n.tree.root = root
 		root.children[0] = n
 		root.children[1] = &newNode
-		root.keys[0] = newNode.keys[0]
+		root.keys[0] = newNode.getLowestKeyInSubtree()
 		root.n = 1
 		n.parent = root
 		newNode.parent = root
 	}
 	return nil
+}
+
+func (n *node) getLowestKeyInSubtree() uint64 {
+	if n.isLeaf {
+		return n.keys[0]
+	} else {
+		return n.children[0].getLowestKeyInSubtree()
+	}
 }
 
 func (n *node) appendChildNode(child *node) error {
@@ -218,25 +239,16 @@ func (n *node) appendChildNode(child *node) error {
 	}
 
 	if n.n < MAX_DEGREE {
-		key := child.keys[0]
+		key := child.getLowestKeyInSubtree()
 
 		// insert rightmost key/child
 		if key >= n.keys[n.n-1] {
 			n.keys[n.n] = key
 			n.children[n.n+1] = child
 			n.n++
-		} else if key < n.keys[0] {
-			n.children[n.n+1] = n.children[n.n]
-			for j := n.n; j > 0; j-- {
-				n.keys[j] = n.keys[j-1]
-				n.children[j] = n.children[j-1]
-			}
-			n.keys[0] = key
-			n.children[0] = child
-			n.n++
 		} else {
-			// find index to insert child
-			var i int = 1
+			// find index to insert key/child
+			var i int = 0
 
 			for i < n.n-1 {
 				if key > n.keys[i] {
@@ -275,5 +287,34 @@ func (t *bTree) Get(key uint64) ([10]byte, error) {
 		return (n.values[i]), nil
 	}
 
-	return [10]byte{}, errors.New("key does not exist")
+	return [10]byte{}, keyvaluestore.ErrNotFound
+}
+
+// returns a string representation of the keys in the leaves
+func (t *bTree) Print() {
+	// get left-most leaf
+	firstNodeInLevel := t.root
+	fmt.Println("====== Tree Start ======")
+	for firstNodeInLevel != nil {
+		n := firstNodeInLevel
+		var sb strings.Builder
+
+		sb.WriteString("[")
+		for n != nil {
+			sb.WriteString("[ ")
+			for i := 0; i < n.n; i++ {
+				sb.WriteString(fmt.Sprint(n.keys[i]))
+				sb.WriteString(", ")
+			}
+			sb.WriteString(" ],")
+
+			n = n.next
+		}
+
+		sb.WriteString("]")
+		fmt.Println(sb.String())
+
+		firstNodeInLevel = firstNodeInLevel.children[0]
+	}
+	fmt.Println("====== Tree End ======")
 }
