@@ -4,6 +4,7 @@ import (
 	keyvaluestore "keyvaluestore/keyvaluestore/errors"
 	"log"
 	"math"
+	"math/rand"
 	"strconv"
 	"testing"
 
@@ -127,6 +128,34 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 	}
 
 	for i = 1; i <= 100; i++ {
+		var val [10]byte
+		ret, err := kv.Get(i)
+		assert.NoError(err)
+		assert.NotNil(ret)
+		copy(val[:], "Test"+strconv.FormatUint(i, 10))
+		assert.Equal(val, ret)
+	}
+}
+
+func TestInsertAndReadInRandomOrder(t *testing.T) {
+	assert := assert.New(t)
+	if kv == nil {
+		assert.Fail("Unable to initialize KeyValueStore")
+		return
+	}
+
+	var i uint64
+	for _, j := range rand.Perm(100) {
+		var val [10]byte
+		i = uint64(j)
+		copy(val[:], "Test"+strconv.FormatUint(i, 10))
+		err := kv.Put(i, val)
+		if !assert.NoError(err) {
+			return
+		}
+	}
+
+	for i = 1; i <= 99; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
 		assert.NoError(err)
