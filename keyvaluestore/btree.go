@@ -147,12 +147,51 @@ func (n *node) insertValueToLeaf(key uint64, value [10]byte, index int) error {
 		n.values[index] = value
 		n.n++
 
-		// node is over-full after insertion. split it
+		// node is over-full after insertion. try to shift the right-most key/value pair to the next node or split it
 		if n.n == MAX_DEGREE {
+			if n.next != nil && n.next.n < MAX_DEGREE-1 {
+				return n.shiftToRight()
+			}
+
 			return n.splitNode()
 		}
 	} else {
 		return errors.New("cannot insert value to leaf. node is already over-full")
+	}
+	return nil
+}
+
+func (n *node) shiftToRight() error {
+	if !n.isLeaf {
+		return errors.New("cannot shift on non-leaf nodes")
+	}
+	next := n.next
+
+	for i := next.n; i >= 0; i-- {
+		next.keys[i+1] = next.keys[i]
+		next.values[i+1] = next.values[i]
+	}
+	next.keys[0] = n.keys[n.n-1]
+	next.values[0] = n.values[n.n-1]
+	n.keys[n.n-1] = 0
+	n.values[n.n-1] = [10]byte{}
+
+	n.n--
+	next.n++
+
+	return next.parent.recalculateKeys()
+}
+
+func (n *node) recalculateKeys() error {
+	if n.isLeaf {
+		return errors.New("cannot recalculate keys on leaf nodes")
+	}
+	for i := 0; i < n.n; i++ {
+		n.keys[i] = n.children[i+1].getLowestKeyInSubtree()
+	}
+
+	if n.parent != nil {
+		return n.parent.recalculateKeys()
 	}
 	return nil
 }
