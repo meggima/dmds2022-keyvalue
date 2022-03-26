@@ -21,7 +21,7 @@ type node struct {
 	nodeId   uint64
 	n        int // Number of keys
 	keys     []uint64
-	values   [][10]byte
+	values   []*[10]byte
 	children []*node
 	isLeaf   bool
 	next     *node
@@ -48,9 +48,9 @@ func (t *bTree) NewNode() *node {
 	var node *node = &node{
 		nodeId:   t.nextNodeId,
 		n:        0,
-		keys:     make([]uint64, MAX_DEGREE),   // The arrays are one element larger than they need
-		values:   make([][10]byte, MAX_DEGREE), // to be to allow overfilling them while inserting new keys.
-		children: make([]*node, MAX_DEGREE+1),  // Note the +1 as we have one child pointer more than keys.
+		keys:     make([]uint64, MAX_DEGREE),    // The arrays are one element larger than they need
+		values:   make([]*[10]byte, MAX_DEGREE), // to be to allow overfilling them while inserting new keys.
+		children: make([]*node, MAX_DEGREE+1),   // Note the +1 as we have one child pointer more than keys.
 		isLeaf:   false,
 		next:     nil,
 		parent:   nil,
@@ -63,22 +63,22 @@ func (t *bTree) NewNode() *node {
 }
 
 func (t *bTree) Find(key uint64, errorIfExists bool) (*node, int, error) {
-	return t.root.Find(key, errorIfExists)
+	return t.root.find(key, errorIfExists)
 }
 
-func (n *node) Find(key uint64, errorIfExists bool) (*node, int, error) {
+func (n *node) find(key uint64, errorIfExists bool) (*node, int, error) {
 	if n.isLeaf {
-		return n.FindInLeaf(key, errorIfExists)
+		return n.findInLeaf(key, errorIfExists)
 	} else {
 		// Falls into the leftmost child
 		if key < n.keys[0] {
 			// The leftmost child always exists at this point
-			return n.children[0].Find(key, errorIfExists)
+			return n.children[0].find(key, errorIfExists)
 		}
 
 		// Falls into the rightmost child
 		if key >= n.keys[n.n-1] {
-			return n.children[n.n].Find(key, errorIfExists)
+			return n.children[n.n].find(key, errorIfExists)
 		}
 
 		// Falls into one of the intermediate children
@@ -92,20 +92,12 @@ func (n *node) Find(key uint64, errorIfExists bool) (*node, int, error) {
 			}
 		}
 
-		return n.children[i].Find(key, errorIfExists)
+		return n.children[i].find(key, errorIfExists)
 	}
 }
 
-func (n *node) FindInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
-	var i int = 0
-
-	for i < n.n {
-		if key > n.keys[i] {
-			i++
-		} else {
-			break
-		}
-	}
+func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
+	i := n.findIndexForKey(key)
 
 	if n.keys[i] == key {
 		if errorIfExists {
@@ -118,7 +110,21 @@ func (n *node) FindInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
 	}
 }
 
-func (t *bTree) Put(key uint64, value [10]byte) error {
+func (n *node) findIndexForKey(key uint64) int {
+	var i int = 0
+
+	for i < n.n {
+		if key > n.keys[i] {
+			i++
+		} else {
+			break
+		}
+	}
+
+	return i
+}
+
+func (t *bTree) Put(key uint64, value *[10]byte) error {
 	n, i, _ := t.Find(key, false)
 
 	if !n.isLeaf {
@@ -130,7 +136,7 @@ func (t *bTree) Put(key uint64, value [10]byte) error {
 	return err
 }
 
-func (n *node) insertValueToLeaf(key uint64, value [10]byte, index int) error {
+func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index int) error {
 	if n.keys[index] == key {
 		// overwrite existing key
 		n.values[index] = value
@@ -138,19 +144,12 @@ func (n *node) insertValueToLeaf(key uint64, value [10]byte, index int) error {
 	} else if n.n < MAX_DEGREE {
 		// insert value into leaf
 
-		// shift keys/values to the right of the index by one
-		for j := n.n; j > index; j-- {
-			n.keys[j] = n.keys[j-1]
-			n.values[j] = n.values[j-1]
-		}
-		n.keys[index] = key
-		n.values[index] = value
-		n.n++
+		n.shiftElementsRightAndInsertKey(index, key, value, nil)
 
 		// node is over-full after insertion. try to shift the right-most key/value pair to the next node or split it
 		if n.n == MAX_DEGREE {
 			if n.next != nil && n.next.n < MAX_DEGREE-1 {
-				return n.shiftToRight()
+				return n.shiftRightmostElementToNext()
 			}
 
 			return n.splitNode()
@@ -161,7 +160,20 @@ func (n *node) insertValueToLeaf(key uint64, value [10]byte, index int) error {
 	return nil
 }
 
-func (n *node) shiftToRight() error {
+func (n *node) shiftElementsRightAndInsertKey(index int, key uint64, value *[10]byte, child *node) {
+	// shift keys/children to the right of the index by one
+	for j := n.n; j > index; j-- {
+		n.keys[j] = n.keys[j-1]
+		n.values[j] = n.values[j-1]
+		n.children[j+1] = n.children[j]
+	}
+	n.keys[index] = key
+	n.values[index] = value
+	n.children[index+1] = child
+	n.n++
+}
+
+func (n *node) shiftRightmostElementToNext() error {
 	if !n.isLeaf {
 		return errors.New("cannot shift on non-leaf nodes")
 	}
@@ -174,7 +186,7 @@ func (n *node) shiftToRight() error {
 	next.keys[0] = n.keys[n.n-1]
 	next.values[0] = n.values[n.n-1]
 	n.keys[n.n-1] = 0
-	n.values[n.n-1] = [10]byte{}
+	n.values[n.n-1] = &[10]byte{}
 
 	n.n--
 	next.n++
@@ -197,67 +209,71 @@ func (n *node) recalculateKeys() error {
 }
 
 func (n *node) splitNode() error {
-	newNode := *n.tree.NewNode()
+	newNode := n.tree.NewNode()
 	newNode.isLeaf = n.isLeaf
 
 	if n.isLeaf {
-		newIndex := 0
-		leftSize := int(math.Ceil(float64(n.n) / 2))
-		for j := leftSize; j < n.n; j++ {
-			newNode.keys[newIndex] = n.keys[j]
-			newNode.values[newIndex] = n.values[j]
-			n.keys[j] = 0
-			n.values[j] = [10]byte{}
-			newIndex++
-		}
+		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
 		n.n = leftSize
-		newNode.n = newIndex
+		newNode.n = rightSize
 	} else {
-		newIndex := 0
-		leftSize := int(math.Floor(float64(n.n) / 2))
-		for j := leftSize + 1; j < n.n; j++ {
-			newNode.keys[newIndex] = n.keys[j]
-			newNode.children[newIndex] = n.children[j]
-			n.keys[j] = 0
-			n.children[j] = nil
-			newIndex++
-		}
-		n.keys[leftSize] = 0 // remove middle key, it isn't needed anymore
+		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
+
+		// remove middle key, it isn't needed anymore
+		n.keys[leftSize] = 0
 
 		// move the last child manually
-		newNode.children[newIndex] = n.children[n.n]
+		newNode.children[rightSize] = n.children[n.n]
+		newNode.children[rightSize].parent = newNode
 		n.children[n.n] = nil
 
-		// updated the parent for all moved children
-		for _, c := range newNode.children {
-			if c == nil {
-				continue
-			}
-			c.parent = &newNode
-		}
-
 		n.n = leftSize
-		newNode.n = newIndex
+		newNode.n = rightSize
 	}
 	newNode.parent = n.parent
 	newNode.next = n.next
-	n.next = &newNode
+	n.next = newNode
 
 	if n.parent != nil {
 		// add new node to parent
-		return n.parent.appendChildNode(&newNode)
+		return n.parent.appendChildNode(newNode)
 	} else {
-		// create new root
-		root := n.tree.NewNode()
-		n.tree.root = root
-		root.children[0] = n
-		root.children[1] = &newNode
-		root.keys[0] = newNode.getLowestKeyInSubtree()
-		root.n = 1
-		n.parent = root
-		newNode.parent = root
+		n.tree.createNewRootWithChildren(n, newNode)
 	}
 	return nil
+}
+
+func (t *bTree) createNewRootWithChildren(leftChild *node, rightChild *node) {
+	// create new root
+	root := t.NewNode()
+	t.root = root
+	root.children[0] = leftChild
+	root.children[1] = rightChild
+	root.keys[0] = rightChild.getLowestKeyInSubtree()
+	root.n = 1
+	leftChild.parent = root
+	rightChild.parent = root
+}
+
+func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN int, sizeNewNode int) {
+	sizeNewNode = 0
+	sizeoldNodeN = int(math.Ceil(float64(n.n) / 2))
+	for j := sizeoldNodeN; j < n.n; j++ {
+		newNode.keys[sizeNewNode] = n.keys[j]
+		newNode.values[sizeNewNode] = n.values[j]
+		newNode.children[sizeNewNode] = n.children[j]
+
+		if newNode.children[sizeNewNode] != nil {
+			newNode.children[sizeNewNode].parent = newNode
+		}
+
+		n.keys[j] = 0
+		n.values[j] = &[10]byte{}
+		n.children[j] = nil
+		sizeNewNode++
+	}
+
+	return sizeoldNodeN, sizeNewNode
 }
 
 func (n *node) getLowestKeyInSubtree() uint64 {
@@ -287,24 +303,10 @@ func (n *node) appendChildNode(child *node) error {
 			n.n++
 		} else {
 			// find index to insert key/child
-			var i int = 0
+			i := n.findIndexForKey(key)
 
-			for i < n.n-1 {
-				if key > n.keys[i] {
-					i++
-				} else {
-					break
-				}
-			}
+			n.shiftElementsRightAndInsertKey(i, key, nil, child)
 
-			// shift keys/children to the right of the index by one
-			for j := n.n; j > i; j-- {
-				n.keys[j] = n.keys[j-1]
-				n.children[j+1] = n.children[j]
-			}
-			n.keys[i] = key
-			n.children[i+1] = child
-			n.n++
 		}
 
 		// node is over-full after insertion. split it
@@ -323,7 +325,7 @@ func (t *bTree) Get(key uint64) ([10]byte, error) {
 	n, i, _ := t.Find(key, false)
 
 	if n.isLeaf && n.keys[i] == key {
-		return (n.values[i]), nil
+		return (*n.values[i]), nil
 	}
 
 	return [10]byte{}, keyvaluestore.ErrNotFound

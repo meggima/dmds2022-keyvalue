@@ -10,7 +10,7 @@ func New() *KeyValueStore {
 	}
 }
 
-func (kv *KeyValueStore) Put(key uint64, value [10]byte) error {
+func (kv *KeyValueStore) Put(key uint64, value *[10]byte) error {
 	return kv.tree.Put(key, value)
 }
 

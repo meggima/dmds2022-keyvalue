@@ -31,7 +31,7 @@ func TestSimpleInsertAndGet(t *testing.T) {
 
 	var val [10]byte
 	copy(val[:], "Test")
-	assert.NoError(kv.Put(1, val))
+	assert.NoError(kv.Put(1, &val))
 	ret, err := kv.Get(1)
 	assert.NoError(err)
 	assert.NotNil(ret)
@@ -49,7 +49,7 @@ func TestInsertAndReadInOrder(t *testing.T) {
 	for i = 1; i <= 100; i++ {
 		var val [10]byte
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
-		err := kv.Put(i, val)
+		err := kv.Put(i, &val)
 		if !assert.NoError(err) {
 			return
 		}
@@ -88,7 +88,7 @@ func TestInsertAndReadInReverseOrder(t *testing.T) {
 	for i = 100; i > 0; i-- {
 		var val [10]byte
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
-		err := kv.Put(i, val)
+		err := kv.Put(i, &val)
 		if !assert.NoError(err) {
 			return
 		}
@@ -120,7 +120,7 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 			j = 101 - j
 		}
 		copy(val[:], "Test"+strconv.FormatUint(j, 10))
-		err := kv.Put(j, val)
+		err := kv.Put(j, &val)
 		if !assert.NoError(err) {
 			return
 		}
@@ -149,7 +149,7 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 		var val [10]byte
 		i = uint64(j)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
-		err := kv.Put(i, val)
+		err := kv.Put(i, &val)
 		if !assert.NoError(err) {
 			return
 		}
