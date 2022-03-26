@@ -4,7 +4,7 @@ package keyvaluestore
 type KeyValueStoreAccessor interface {
 	// Put the given value into the store using the given key.
 	// Returns an error in case something went wrong.
-	Put(key uint64, value [10]byte) error
+	Put(key uint64, value *[10]byte) error
 
 	// Get the value for the given key from the store.
 	// Returns the value or an error if the given key does not exist in the store
