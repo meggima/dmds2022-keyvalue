@@ -10,35 +10,47 @@ type node struct {
 	n        int // Number of keys
 	keys     []uint64
 	values   []*[10]byte
-	children []*node
+	children []uint64
 	isLeaf   bool
-	next     *node
-	parent   *node
+	next     uint64
+	parent   uint64
 	tree     *bTree
 }
 
 func (n *node) getChildAt(index int) *node {
-	return n.children[index]
+	return n.tree.getNodeById(n.children[index])
 }
 
 func (n *node) setChildAt(index int, node *node) {
-	n.children[index] = node
+	if node == nil {
+		n.children[index] = 0
+	} else {
+		n.children[index] = node.nodeId
+	}
 }
 
 func (n *node) getParent() *node {
-	return n.parent
+	return n.tree.getNodeById(n.parent)
 }
 
 func (n *node) setParent(parent *node) {
-	n.parent = parent
+	if parent == nil {
+		n.parent = 0
+	} else {
+		n.parent = parent.nodeId
+	}
 }
 
 func (n *node) getNext() *node {
-	return n.next
+	return n.tree.getNodeById(n.next)
 }
 
 func (n *node) setNext(next *node) {
-	n.next = next
+	if next == nil {
+		n.next = 0
+	} else {
+		n.next = next.nodeId
+	}
 }
 
 func (n *node) find(key uint64, errorIfExists bool) (*node, int, error) {

@@ -69,14 +69,14 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	leaf2.keys[0] = 11
 	leaf2.keys[0] = 20
 
-	leaf1.next = leaf2
+	leaf1.setNext(leaf2)
 
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = leaf1
-	tree.root.children[1] = leaf2
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, leaf1)
+	tree.root.setChildAt(1, leaf2)
 
 	// Act
 	n, i, err := tree.Find(uint64(30), false)
@@ -105,14 +105,14 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
 
-	leaf1.next = leaf2
+	leaf1.setNext(leaf2)
 
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = leaf1
-	tree.root.children[1] = leaf2
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, leaf1)
+	tree.root.setChildAt(1, leaf2)
 
 	// Act
 	n, i, err := tree.Find(uint64(5), false)
@@ -142,14 +142,14 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	leaf2.keys[0] = 11
 	leaf2.keys[1] = 20
 
-	leaf1.next = leaf2
+	leaf1.setNext(leaf2)
 
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = leaf1
-	tree.root.children[1] = leaf2
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, leaf1)
+	tree.root.setChildAt(1, leaf2)
 
 	// Act
 	n, i, err := tree.Find(uint64(4), false)
@@ -184,17 +184,17 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	leaf3.keys[0] = 25
 	leaf3.keys[1] = 30
 
-	leaf1.next = leaf2
-	leaf2.next = leaf3
+	leaf1.setNext(leaf2)
+	leaf2.setNext(leaf3)
 
 	tree.root.n = 2
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = leaf1
-	tree.root.children[1] = leaf2
-	tree.root.children[2] = leaf3
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, leaf1)
+	tree.root.setChildAt(1, leaf2)
+	tree.root.setChildAt(2, leaf3)
 
 	// Act
 	n, i, err := tree.Find(uint64(15), false)
@@ -233,10 +233,10 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = leaf1
-	tree.root.children[1] = leaf2
-	tree.root.children[2] = leaf3
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, leaf1)
+	tree.root.setChildAt(1, leaf2)
+	tree.root.setChildAt(2, leaf3)
 
 	// Act
 	n, i, err := tree.Find(uint64(40), false)
@@ -281,9 +281,9 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	inner1.n = 2
 	inner1.keys[0] = 10
 	inner1.keys[1] = 15
-	inner1.children[0] = leaf1
-	inner1.children[1] = leaf2
-	inner1.children[2] = leaf3
+	inner1.setChildAt(0, leaf1)
+	inner1.setChildAt(1, leaf2)
+	inner1.setChildAt(2, leaf3)
 
 	var leaf4 *node = tree.NewNode()
 	leaf4.isLeaf = true
@@ -301,22 +301,22 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	inner2.n = 2
 	inner2.keys[0] = 17
 	inner2.keys[1] = 30
-	inner2.children[1] = leaf4
-	inner2.children[2] = leaf5
+	inner2.setChildAt(1, leaf4)
+	inner2.setChildAt(2, leaf5)
 
-	leaf1.next = leaf2
-	leaf2.next = leaf3
-	leaf3.next = leaf4
-	leaf4.next = leaf5
+	leaf1.setNext(leaf2)
+	leaf2.setNext(leaf3)
+	leaf3.setNext(leaf4)
+	leaf4.setNext(leaf5)
 
-	inner1.next = inner2
+	inner1.setNext(inner2)
 
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 17
-	tree.root.children = make([]*node, MAX_DEGREE+1)
-	tree.root.children[0] = inner1
-	tree.root.children[1] = inner2
+	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.setChildAt(0, inner1)
+	tree.root.setChildAt(1, inner2)
 
 	// Act
 	n1, i1, err1 := tree.Find(uint64(41), false) // non existing key

@@ -8,17 +8,22 @@ import (
 )
 
 const (
-	MAX_DEGREE = 6 // TODO calculate degree based on chosen page size and size of a kvEntry
+	MAX_DEGREE  = 6    // TODO calculate degree based on chosen page size and size of a kvEntry
+	BUFFER_SIZE = 1000 // TODO gather from kv init
 )
 
 type bTree struct {
 	root       *node
 	nextNodeId uint64
+	buffer     BufferManager
 }
 
 func NewTree() *bTree {
+	var buffer BufferManager = NewBufferManager(BUFFER_SIZE, &NullNodeReader{}, &NullNodeWriter{}) // TODO use real reader/writer
+
 	var tree = &bTree{
-		nextNodeId: 0,
+		nextNodeId: 1,
+		buffer:     buffer,
 	}
 
 	tree.Init()
@@ -31,18 +36,30 @@ func (t *bTree) Init() {
 	t.root.isLeaf = true
 }
 
+func (t *bTree) getNodeById(nodeId uint64) *node {
+	if nodeId == 0 {
+		return nil
+	}
+
+	node, _ := t.buffer.Get(nodeId)
+
+	return node
+}
+
 func (t *bTree) NewNode() *node {
 	var node *node = &node{
 		nodeId:   t.nextNodeId,
 		n:        0,
 		keys:     make([]uint64, MAX_DEGREE),    // The arrays are one element larger than they need
 		values:   make([]*[10]byte, MAX_DEGREE), // to be to allow overfilling them while inserting new keys.
-		children: make([]*node, MAX_DEGREE+1),   // Note the +1 as we have one child pointer more than keys.
+		children: make([]uint64, MAX_DEGREE+1),  // Note the +1 as we have one child pointer more than keys.
 		isLeaf:   false,
-		next:     nil,
-		parent:   nil,
+		next:     0,
+		parent:   0,
 		tree:     t,
 	}
+
+	t.buffer.Put(node)
 
 	t.nextNodeId += 1
 
