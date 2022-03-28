@@ -1,5 +1,9 @@
 # dmds2022-keyvalue
 
+Lukas Bosshart
+
+Markus Eggimann
+
 ## Sources and Inspirations
 
 - https://www.javatpoint.com/b-plus-tree
