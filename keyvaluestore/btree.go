@@ -4,11 +4,12 @@ import (
 	"errors"
 	"fmt"
 	keyvaluestore "keyvaluestore/keyvaluestore/errors"
+	"os"
 	"strings"
 )
 
 const (
-	MAX_DEGREE  = 6    // TODO calculate degree based on chosen page size and size of a kvEntry
+	MAX_DEGREE  = 226
 	BUFFER_SIZE = 1000 // TODO gather from kv init
 )
 
@@ -18,22 +19,29 @@ type bTree struct {
 	buffer     BufferManager
 }
 
-func NewTree() *bTree {
-	var buffer BufferManager = NewBufferManager(BUFFER_SIZE, &NullNodeReader{}, &NullNodeWriter{}) // TODO use real reader/writer
+func NewTree(file *os.File) (*bTree, error) {
+	var buffer BufferManager = NewBufferManager(BUFFER_SIZE, &NodeReaderImpl{ file: file }, &NodeWriterImpl{ file: file })
 
 	var tree = &bTree{
 		nextNodeId: 1,
 		buffer:     buffer,
 	}
 
-	tree.Init()
+	err := tree.Init()
+	if err != nil {
+		return nil, err
+	}
 
-	return tree
+	return tree, nil
 }
 
-func (t *bTree) Init() {
+func (t *bTree) Init() error {
+	// TODO initialization logic after reading from file
 	t.root = t.NewNode()
 	t.root.isLeaf = true
+
+
+	return nil
 }
 
 func (t *bTree) getNodeById(nodeId uint64) *node {

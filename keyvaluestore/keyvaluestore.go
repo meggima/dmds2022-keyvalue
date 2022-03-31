@@ -1,13 +1,19 @@
 package keyvaluestore
 
+import "os"
+
 type KeyValueStore struct {
 	tree *bTree
 }
 
-func New() *KeyValueStore {
-	return &KeyValueStore{
-		tree: NewTree(),
+func New(file *os.File) (*KeyValueStore, error) {
+	tree, err := NewTree(file)
+	if err != nil {
+		return nil, err
 	}
+	return &KeyValueStore{
+		tree: tree,
+	}, nil
 }
 
 func (kv *KeyValueStore) Put(key uint64, value *[10]byte) error {

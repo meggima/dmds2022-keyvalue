@@ -1,12 +1,15 @@
 package keyvaluestore
 
+import "os"
+
 type NodeWriter interface {
 	WriteNode(node *node) error
 }
 
-type NullNodeWriter struct {
+type NodeWriterImpl struct {
+	file *os.File
 }
 
-func (writer *NullNodeWriter) WriteNode(node *node) error {
+func (writer *NodeWriterImpl) WriteNode(node *node) error {
 	return nil
 }
