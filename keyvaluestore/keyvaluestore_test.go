@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"os"
 	"strconv"
 	"testing"
 
@@ -163,4 +164,9 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
 		assert.Equal(val, ret)
 	}
+}
+
+func TestPageSize(t *testing.T) {
+	assert := assert.New(t)
+	assert.Equal(4096, os.Getpagesize())
 }
