@@ -11,7 +11,7 @@ func TestNewBufferManager(t *testing.T) {
 	assert := assert.New(t)
 
 	// Act
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	// Assert
 	assert.Equal(uint64(10), bm.capacity)
@@ -24,7 +24,7 @@ func TestNewBufferManager(t *testing.T) {
 func TestGetItemBufferEmpty(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	// Act
 	node, _ := bm.Get(1)
@@ -36,7 +36,7 @@ func TestGetItemBufferEmpty(t *testing.T) {
 func TestPutSingleItem(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node *node = &node{
 		nodeId: 1,
@@ -59,7 +59,7 @@ func TestPutSingleItem(t *testing.T) {
 func TestPutAndGetSingleItem(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -85,7 +85,7 @@ func TestPutAndGetSingleItem(t *testing.T) {
 func TestPutTwoItems(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -119,7 +119,7 @@ func TestPutTwoItems(t *testing.T) {
 func TestPutTwoAndGetOneItem(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -142,7 +142,7 @@ func TestPutTwoAndGetOneItem(t *testing.T) {
 func TestPutAndGetOneItemCorrectRecentlyUsedValues(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -165,7 +165,7 @@ func TestPutAndGetOneItemCorrectRecentlyUsedValues(t *testing.T) {
 func TestPutTwoAndGetOneItemCorrectRecentlyUsedValues(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -192,7 +192,7 @@ func TestPutTwoAndGetOneItemCorrectRecentlyUsedValues(t *testing.T) {
 func TestPutThreeAndGetMiddleItemCorrectRecentlyUsedValues(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -234,7 +234,7 @@ func TestPutThreeAndGetMiddleItemCorrectRecentlyUsedValues(t *testing.T) {
 func TestPutThreeAndGetMostRecentItemCorrectRecentlyUsedValues(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,
@@ -276,7 +276,7 @@ func TestPutThreeAndGetMostRecentItemCorrectRecentlyUsedValues(t *testing.T) {
 func TestPutThreeAndGetLeastRecentItemCorrectRecentlyUsedValues(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var bm *BufferManagerImpl = NewBufferManager(10, &NullNodeReader{}, &NullNodeWriter{})
+	var bm *BufferManagerImpl = NewBufferManager(10, &NodeReaderImpl{}, &NodeWriterImpl{})
 
 	var node1 *node = &node{
 		nodeId: 1,

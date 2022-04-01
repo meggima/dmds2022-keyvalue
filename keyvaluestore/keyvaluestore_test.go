@@ -12,23 +12,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var kv KeyValueStoreAccessor
-
-func TestMain(m *testing.M) {
+func setupStore(t *testing.T) (KeyValueStoreAccessor, error) {
 	log.Println("Initalizing kv store")
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(home+"/kvstoretest/", os.ModePerm) // create directory if it doesn't exists
+	if err != nil {
+		return nil, err
+	}
+	err = os.RemoveAll(home + "/kvstoretest/" + FILENAME) // cleanup store file at start of test
+	if err != nil {
+		return nil, err
+	}
+
 	keyValueManager := KeyValueStoreManager{}
-	keyValueManager.Delete("/tmp")
-	keyValueManager.Create("/tmp", 100)
-	kv, _ = keyValueManager.Open("/tmp")
-	m.Run()
+	keyValueManager.Create(home+"/kvstoretest/", 1<<(10*3)) // 1 GB
+	kv, err := keyValueManager.Open(home + "/kvstoretest/")
+	if err != nil {
+		return nil, err
+	}
+
+	t.Cleanup(func() {
+		keyValueManager.Close(kv)
+		keyValueManager.Delete(home + "/kvstoretest/")
+	})
+	return kv, nil
 }
 
 func TestSimpleInsertAndGet(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
 	var val [10]byte
 	copy(val[:], "Test")
@@ -41,10 +57,8 @@ func TestSimpleInsertAndGet(t *testing.T) {
 
 func TestInsertAndReadInOrder(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
 	var i uint64
 	for i = 1; i <= 100; i++ {
@@ -68,22 +82,18 @@ func TestInsertAndReadInOrder(t *testing.T) {
 
 func TestReadMissingValue(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
-	_, err := kv.Get(9999)
+	_, err = kv.Get(9999)
 
 	assert.ErrorIs(err, keyvaluestore.ErrNotFound)
 }
 
 func TestInsertAndReadInReverseOrder(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
 	var i uint64
 	for i = 100; i > 0; i-- {
@@ -107,10 +117,8 @@ func TestInsertAndReadInReverseOrder(t *testing.T) {
 
 func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
 	var i uint64
 	reverse := false
@@ -140,10 +148,8 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 
 func TestInsertAndReadInRandomOrder(t *testing.T) {
 	assert := assert.New(t)
-	if kv == nil {
-		assert.Fail("Unable to initialize KeyValueStore")
-		return
-	}
+	kv, err := setupStore(t)
+	assert.NoError(err)
 
 	var i uint64
 	for _, j := range rand.Perm(100) {

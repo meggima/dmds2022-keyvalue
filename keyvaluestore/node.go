@@ -15,6 +15,7 @@ type node struct {
 	next     uint64
 	parent   uint64
 	tree     *bTree
+	isDirty  bool
 }
 
 func (n *node) getChildAt(index int) *node {
@@ -115,15 +116,16 @@ func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index int) error {
 	if n.keys[index] == key {
 		// overwrite existing key
 		n.values[index] = value
+		n.isDirty = true
 		return nil
-	} else if n.n < MAX_DEGREE {
+	} else if n.n < n.tree.max_degree {
 		// insert value into leaf
 
 		n.shiftElementsRightAndInsertKey(index, key, value, nil)
 
 		// node is over-full after insertion. try to shift the right-most key/value pair to the next node or split it
-		if n.n == MAX_DEGREE {
-			if n.getNext() != nil && n.getNext().n < MAX_DEGREE-1 {
+		if n.n == n.tree.max_degree {
+			if n.getNext() != nil && n.getNext().n < n.tree.max_degree-1 {
 				return n.shiftRightmostElementToNext()
 			}
 
@@ -146,6 +148,7 @@ func (n *node) shiftElementsRightAndInsertKey(index int, key uint64, value *[10]
 	n.values[index] = value
 	n.setChildAt(index+1, child)
 	n.n++
+	n.isDirty = true
 }
 
 func (n *node) shiftRightmostElementToNext() error {
@@ -165,6 +168,7 @@ func (n *node) shiftRightmostElementToNext() error {
 
 	n.n--
 	next.n++
+	next.isDirty = true
 
 	return next.getParent().recalculateKeys()
 }
@@ -176,6 +180,7 @@ func (n *node) recalculateKeys() error {
 	for i := 0; i < n.n; i++ {
 		n.keys[i] = n.getChildAt(i + 1).getLowestKeyInSubtree()
 	}
+	n.isDirty = true
 
 	if n.getParent() != nil {
 		return n.getParent().recalculateKeys()
@@ -186,6 +191,7 @@ func (n *node) recalculateKeys() error {
 func (n *node) splitNode() error {
 	newNode := n.tree.NewNode()
 	newNode.isLeaf = n.isLeaf
+	newNode.isDirty = true
 
 	if n.isLeaf {
 		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
@@ -257,7 +263,7 @@ func (n *node) appendChildNode(child *node) error {
 		return errors.New("cannot append empty child")
 	}
 
-	if n.n < MAX_DEGREE {
+	if n.n < n.tree.max_degree {
 		key := child.getLowestKeyInSubtree()
 
 		// insert rightmost key/child
@@ -272,9 +278,10 @@ func (n *node) appendChildNode(child *node) error {
 			n.shiftElementsRightAndInsertKey(i, key, nil, child)
 
 		}
+		n.isDirty = true
 
 		// node is over-full after insertion. split it
-		if n.n == MAX_DEGREE {
+		if n.n == n.tree.max_degree {
 			return n.splitNode()
 		}
 
