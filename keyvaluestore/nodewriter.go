@@ -17,5 +17,7 @@ func (writer *NodeWriterImpl) WriteNode(node *node) error {
 		return nil
 	}
 
+	//id := node.nodeId
+
 	return nil
 }

@@ -16,7 +16,7 @@ func TestNewTreeShouldCreateTree(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.NotNil(tree.root)
-	assert.Equal(0, tree.root.n)
+	assert.Equal(uint32(0), tree.root.n)
 	assert.True(tree.root.isLeaf)
 }
 
@@ -32,7 +32,7 @@ func TestFindNonExistingKeyEmptyTree(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(tree.root, n)
-	assert.Equal(0, i)
+	assert.Equal(uint32(0), i)
 }
 
 func TestFindNonExistingKeyOnlyRoot(t *testing.T) {
@@ -51,7 +51,7 @@ func TestFindNonExistingKeyOnlyRoot(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(tree.root, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
@@ -88,7 +88,7 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf2, n)
-	assert.Equal(2, i)
+	assert.Equal(uint32(2), i)
 }
 
 func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
@@ -125,7 +125,7 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf1, n)
-	assert.Equal(0, i)
+	assert.Equal(uint32(0), i)
 }
 
 func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
@@ -163,7 +163,7 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf1, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
@@ -209,7 +209,7 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf2, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
@@ -252,7 +252,7 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf3, n)
-	assert.Equal(2, i)
+	assert.Equal(uint32(2), i)
 }
 
 func TestFindKeysMultipleInnerNodes(t *testing.T) {
@@ -335,13 +335,13 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	// Assert
 	assert.Nil(err1)
 	assert.Equal(leaf5, n1)
-	assert.Equal(2, i1)
+	assert.Equal(uint32(2), i1)
 
 	assert.NotNil(err2)
 	assert.Equal(leaf3, n2)
-	assert.Equal(1, i2)
+	assert.Equal(uint32(1), i2)
 
 	assert.NotNil(err3)
 	assert.Equal(leaf4, n3)
-	assert.Equal(0, i3)
+	assert.Equal(uint32(0), i3)
 }

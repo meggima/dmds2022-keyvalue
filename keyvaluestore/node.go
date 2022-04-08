@@ -7,7 +7,7 @@ import (
 
 type node struct {
 	nodeId   uint64
-	n        int // Number of keys
+	n        uint32 // Number of keys
 	keys     []uint64
 	values   []*[10]byte
 	children []uint64
@@ -18,11 +18,11 @@ type node struct {
 	isDirty  bool
 }
 
-func (n *node) getChildAt(index int) *node {
+func (n *node) getChildAt(index uint32) *node {
 	return n.tree.getNodeById(n.children[index])
 }
 
-func (n *node) setChildAt(index int, node *node) {
+func (n *node) setChildAt(index uint32, node *node) {
 	if node == nil {
 		n.children[index] = 0
 	} else {
@@ -54,7 +54,7 @@ func (n *node) setNext(next *node) {
 	}
 }
 
-func (n *node) find(key uint64, errorIfExists bool) (*node, int, error) {
+func (n *node) find(key uint64, errorIfExists bool) (*node, uint32, error) {
 	if n.isLeaf {
 		return n.findInLeaf(key, errorIfExists)
 	} else {
@@ -70,7 +70,7 @@ func (n *node) find(key uint64, errorIfExists bool) (*node, int, error) {
 		}
 
 		// Falls into one of the intermediate children
-		var i int = 1
+		var i uint32 = 1
 
 		for i < n.n {
 			if key >= n.keys[i] {
@@ -84,7 +84,7 @@ func (n *node) find(key uint64, errorIfExists bool) (*node, int, error) {
 	}
 }
 
-func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
+func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, uint32, error) {
 	i := n.findIndexForKey(key)
 
 	if n.keys[i] == key {
@@ -98,8 +98,8 @@ func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, int, error) {
 	}
 }
 
-func (n *node) findIndexForKey(key uint64) int {
-	var i int = 0
+func (n *node) findIndexForKey(key uint64) uint32 {
+	var i uint32 = 0
 
 	for i < n.n {
 		if key > n.keys[i] {
@@ -112,7 +112,7 @@ func (n *node) findIndexForKey(key uint64) int {
 	return i
 }
 
-func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index int) error {
+func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index uint32) error {
 	if n.keys[index] == key {
 		// overwrite existing key
 		n.values[index] = value
@@ -137,7 +137,7 @@ func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index int) error {
 	return nil
 }
 
-func (n *node) shiftElementsRightAndInsertKey(index int, key uint64, value *[10]byte, child *node) {
+func (n *node) shiftElementsRightAndInsertKey(index uint32, key uint64, value *[10]byte, child *node) {
 	// shift keys/children to the right of the index by one
 	for j := n.n; j > index; j-- {
 		n.keys[j] = n.keys[j-1]
@@ -177,7 +177,8 @@ func (n *node) recalculateKeys() error {
 	if n.isLeaf {
 		return errors.New("cannot recalculate keys on leaf nodes")
 	}
-	for i := 0; i < n.n; i++ {
+	var i uint32 = 0
+	for ; i < n.n; i++ {
 		n.keys[i] = n.getChildAt(i + 1).getLowestKeyInSubtree()
 	}
 	n.isDirty = true
@@ -225,9 +226,9 @@ func (n *node) splitNode() error {
 	return nil
 }
 
-func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN int, sizeNewNode int) {
+func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN uint32, sizeNewNode uint32) {
 	sizeNewNode = 0
-	sizeoldNodeN = int(math.Ceil(float64(n.n) / 2))
+	sizeoldNodeN = uint32(math.Ceil(float64(n.n) / 2))
 	for j := sizeoldNodeN; j < n.n; j++ {
 		newNode.keys[sizeNewNode] = n.keys[j]
 		newNode.values[sizeNewNode] = n.values[j]

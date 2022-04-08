@@ -13,7 +13,7 @@ const (
 	DEFAULT_MAX_DEGREE  = 226
 	DEFAULT_BUFFER_SIZE = 1000
 
-	PAGE_SIZE_OVERHEAD_BYTES = 6
+	PAGE_SIZE_OVERHEAD_BYTES = 11
 	PAGE_SIZE_VARIABLE_BYTES = 18
 )
 
@@ -21,7 +21,7 @@ type bTree struct {
 	root       *node
 	nextNodeId uint64
 	buffer     BufferManager
-	max_degree int
+	max_degree uint32
 }
 
 func NewTree(file *os.File) (*bTree, error) {
@@ -73,9 +73,9 @@ func calculateBufferSize(memorySize uint64) uint64 {
 	return uint64(math.Floor(float64(memorySize-MEMORY_OVERHEAD) / float64(MEMORY_PER_ENTRY)))
 }
 
-func calculateTreeDegree() int {
+func calculateTreeDegree() uint32 {
 	ps := os.Getpagesize()
-	return int(math.Floor(float64(ps-PAGE_SIZE_OVERHEAD_BYTES) / PAGE_SIZE_VARIABLE_BYTES))
+	return uint32(math.Floor(float64(ps-PAGE_SIZE_OVERHEAD_BYTES) / PAGE_SIZE_VARIABLE_BYTES))
 }
 
 func (t *bTree) getNodeById(nodeId uint64) *node {
@@ -109,7 +109,7 @@ func (t *bTree) NewNode() *node {
 	return node
 }
 
-func (t *bTree) Find(key uint64, errorIfExists bool) (*node, int, error) {
+func (t *bTree) Find(key uint64, errorIfExists bool) (*node, uint32, error) {
 	return t.root.find(key, errorIfExists)
 }
 
@@ -160,7 +160,8 @@ func (t *bTree) Print() {
 		sb.WriteString("[")
 		for n != nil {
 			sb.WriteString("[ ")
-			for i := 0; i < n.n; i++ {
+			var i uint32 = 0
+			for ; i < n.n; i++ {
 				sb.WriteString(fmt.Sprint(n.keys[i]))
 				sb.WriteString(", ")
 			}

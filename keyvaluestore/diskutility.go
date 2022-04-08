@@ -7,7 +7,21 @@ import (
 
 func ConvertUInt64(val uint64) []byte {
 	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(val))
+	binary.LittleEndian.PutUint64(b, val)
+	return b
+}
+
+func ConvertBool(val bool) []byte {
+	if val {
+		return []byte{byte(1)}
+	} else {
+		return []byte{byte(0)}
+	}
+}
+
+func ConvertUInt32(val uint32) []byte {
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, val)
 	return b
 }
 
