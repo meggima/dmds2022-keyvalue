@@ -63,8 +63,7 @@ func (kv *KeyValueStoreManager) Close(keyValueStore KeyValueStoreAccessor) error
 	if !ok {
 		return keyvaluestore.ErrStoreNotExists
 	}
-	buffer := store.tree.buffer
-	err := buffer.Flush()
+	err := store.Flush()
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,22 @@ func ConvertUInt32(val uint32) []byte {
 	return b
 }
 
+func ToBool(val byte) bool {
+	if val == 0 {
+		return false
+	} else {
+		return true
+	}
+}
+
+func ToUInt32(val []byte) uint32 {
+	return binary.LittleEndian.Uint32(val)
+}
+
+func ToUInt64(val []byte) uint64 {
+	return binary.LittleEndian.Uint64(val)
+}
+
 func WriteFileHeader(f *os.File, rootId uint64, nextNodeId uint64, memorySize uint64) error {
 	_, err := f.Write(ConvertUInt64(rootId))
 	if err != nil {

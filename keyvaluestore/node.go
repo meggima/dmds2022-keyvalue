@@ -157,7 +157,7 @@ func (n *node) shiftRightmostElementToNext() error {
 	}
 	next := n.getNext()
 
-	for i := next.n; i >= 0; i-- {
+	for i := int(next.n); i >= 0; i-- {
 		next.keys[i+1] = next.keys[i]
 		next.values[i+1] = next.values[i]
 	}

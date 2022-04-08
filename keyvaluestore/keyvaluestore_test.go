@@ -28,7 +28,7 @@ func setupStore(t *testing.T) (KeyValueStoreAccessor, error) {
 	}
 
 	keyValueManager := KeyValueStoreManager{}
-	keyValueManager.Create(home+"/kvstoretest/", 1<<(10*3)) // 1 GB
+	keyValueManager.Create(home+"/kvstoretest/", 16384) // 16KB
 	kv, err := keyValueManager.Open(home + "/kvstoretest/")
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func TestInsertAndReadInOrder(t *testing.T) {
 	assert.NoError(err)
 
 	var i uint64
-	for i = 1; i <= 100; i++ {
+	for i = 1; i <= 32768; i++ {
 		var val [10]byte
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
 		err := kv.Put(i, &val)
@@ -70,7 +70,7 @@ func TestInsertAndReadInOrder(t *testing.T) {
 		}
 	}
 
-	for i = 1; i <= 100; i++ {
+	for i = 1; i <= 32768; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
 		assert.NoError(err)
@@ -96,7 +96,7 @@ func TestInsertAndReadInReverseOrder(t *testing.T) {
 	assert.NoError(err)
 
 	var i uint64
-	for i = 100; i > 0; i-- {
+	for i = 32768; i > 0; i-- {
 		var val [10]byte
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
 		err := kv.Put(i, &val)
@@ -105,7 +105,7 @@ func TestInsertAndReadInReverseOrder(t *testing.T) {
 		}
 	}
 
-	for i = 1; i <= 100; i++ {
+	for i = 1; i <= 32768; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
 		assert.NoError(err)
@@ -122,11 +122,11 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 
 	var i uint64
 	reverse := false
-	for i = 1; i <= 100; i++ {
+	for i = 1; i <= 32768; i++ {
 		var val [10]byte
 		j := uint64(math.Ceil(float64(i) / 2))
 		if reverse {
-			j = 101 - j
+			j = 32769 - j
 		}
 		copy(val[:], "Test"+strconv.FormatUint(j, 10))
 		err := kv.Put(j, &val)
@@ -136,7 +136,7 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 		reverse = !reverse
 	}
 
-	for i = 1; i <= 100; i++ {
+	for i = 1; i <= 32768; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
 		assert.NoError(err)
@@ -152,7 +152,7 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 	assert.NoError(err)
 
 	var i uint64
-	for _, j := range rand.Perm(100) {
+	for _, j := range rand.Perm(32768) {
 		var val [10]byte
 		i = uint64(j)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
@@ -161,6 +161,40 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 			return
 		}
 	}
+
+	for i = 1; i <= 32767; i++ {
+		var val [10]byte
+		ret, err := kv.Get(i)
+		assert.NoError(err)
+		assert.NotNil(ret)
+		copy(val[:], "Test"+strconv.FormatUint(i, 10))
+		assert.Equal(val, ret)
+	}
+}
+
+func TestInsertAndReadInRandomOrderWithReopen(t *testing.T) {
+	assert := assert.New(t)
+	kv, err := setupStore(t)
+	assert.NoError(err)
+
+	var i uint64
+	for _, j := range rand.Perm(32768) {
+		var val [10]byte
+		i = uint64(j)
+		copy(val[:], "Test"+strconv.FormatUint(i, 10))
+		err := kv.Put(i, &val)
+		if !assert.NoError(err) {
+			return
+		}
+	}
+
+	// Write store to file and reopen it
+	keyValueManager := KeyValueStoreManager{}
+	keyValueManager.Close(kv)
+	home, err := os.UserHomeDir()
+	assert.NoError(err)
+	kv, err = keyValueManager.Open(home + "/kvstoretest/")
+	assert.NoError(err)
 
 	for i = 1; i <= 99; i++ {
 		var val [10]byte

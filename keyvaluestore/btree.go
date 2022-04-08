@@ -40,7 +40,7 @@ func NewTree(file *os.File) (*bTree, error) {
 }
 
 func (t *bTree) Init(file *os.File) error {
-	reader := &NodeReaderImpl{file: file}
+	reader := &NodeReaderImpl{file: file, tree: t}
 	if file == nil {
 		// file is null, create an in-memory tree
 		t.buffer = NewBufferManager(DEFAULT_BUFFER_SIZE, reader, &NodeWriterImpl{file: file})
@@ -121,7 +121,7 @@ func (t *bTree) Put(key uint64, value *[10]byte) error {
 	}
 
 	err := n.insertValueToLeaf(key, value, i)
-	t.Print()
+	//t.Print()
 	return err
 }
 
