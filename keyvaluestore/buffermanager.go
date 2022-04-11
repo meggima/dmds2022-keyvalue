@@ -1,5 +1,10 @@
 package keyvaluestore
 
+const (
+	MEMORY_OVERHEAD  = uint64(16) // TODO: these are not correct yet
+	MEMORY_PER_ENTRY = uint64(16) // TODO: these are not correct yet
+)
+
 type BufferManager interface {
 	Get(nodeId uint64) (*node, error)
 	Put(node *node) error
@@ -94,7 +99,16 @@ func (bm *BufferManagerImpl) Put(node *node) error {
 }
 
 func (bm *BufferManagerImpl) Flush() error {
-	// TODO implement writing to disk of whole buffer
+	for bm.leastRecentlyAccessedEntry != nil {
+		if bm.leastRecentlyAccessedEntry.node.isDirty {
+			err := bm.nodeWriter.WriteNode(bm.leastRecentlyAccessedEntry.node)
+			if err != nil {
+				return err
+			}
+		}
+		bm.leastRecentlyAccessedEntry = bm.leastRecentlyAccessedEntry.nextAccessedEntry
+	}
+	bm.mostRecentlyAccessedEntry = nil
 	return nil
 }
 

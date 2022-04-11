@@ -1,33 +1,95 @@
 package keyvaluestore
 
-import keyvaluestore "keyvaluestore/keyvaluestore/errors"
+import (
+	keyvaluestore "keyvaluestore/keyvaluestore/errors"
+	"os"
+)
+
+const (
+	FILENAME = "kv.store"
+)
 
 type KeyValueStoreManager struct {
-	dummyStore *KeyValueStore // TODO change this once we write stores to memory
 }
 
 func (kv *KeyValueStoreManager) Create(directoryName string, memorySize uint64) error {
-	kv.dummyStore = New()
-	return nil
+	if directoryName == "" {
+		// create in current directory
+		directoryName = "."
+	}
+	if _, err := os.Stat(directoryName); os.IsNotExist(err) {
+		return keyvaluestore.ErrDirectoryNotExists
+	}
+	filepath := getStoreFileName(directoryName)
+
+	if _, err := os.Stat(filepath); !os.IsNotExist(err) {
+		// file already exists. throw error
+		return keyvaluestore.ErrStoreExists
+	}
+
+	f, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	rootId := uint64(1)
+	nextNodeId := uint64(1)
+
+	return WriteFileHeader(f, rootId, nextNodeId, memorySize)
 }
 
 func (kv *KeyValueStoreManager) Open(directoryName string) (KeyValueStoreAccessor, error) {
-	if kv.dummyStore != nil {
-		return kv.dummyStore, nil
+	filepath := getStoreFileName(directoryName)
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		// file doesn't exists. throw error
+		return nil, keyvaluestore.ErrStoreNotExists
 	}
-	return nil, keyvaluestore.ErrNotFound
+	f, err := os.OpenFile(filepath, os.O_RDWR, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	kvStore, err := New(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return kvStore, nil
 }
 
 func (kv *KeyValueStoreManager) Close(keyValueStore KeyValueStoreAccessor) error {
-	if kv.dummyStore != nil {
-		return keyvaluestore.ErrNotFound
+	store, ok := keyValueStore.(*KeyValueStore)
+	if !ok {
+		return keyvaluestore.ErrStoreNotExists
 	}
-	return nil // do nothing
+	err := store.Flush()
+	if err != nil {
+		return err
+	}
+
+	store.CloseFile()
+	return nil
 }
 
 func (kv *KeyValueStoreManager) Delete(directoryName string) error {
-	if kv.dummyStore != nil {
-		kv.dummyStore = nil
+	filepath := getStoreFileName(directoryName)
+	if _, err := os.Stat(filepath); os.IsNotExist(err) {
+		// file doesn't exists. throw error
+		return keyvaluestore.ErrStoreNotExists
 	}
-	return keyvaluestore.ErrNotFound
+
+	return os.Remove(filepath)
+}
+
+func getStoreFileName(directoryName string) string {
+	filepath := directoryName
+	if filepath == "" {
+		filepath = "."
+	}
+	if string(filepath[len(filepath)-1]) != "/" {
+		filepath += "/"
+	}
+	filepath += FILENAME
+	return filepath
 }

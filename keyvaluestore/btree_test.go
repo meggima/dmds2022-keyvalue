@@ -11,18 +11,20 @@ func TestNewTreeShouldCreateTree(t *testing.T) {
 	assert := assert.New(t)
 
 	// Act
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
 
 	// Assert
+	assert.Nil(err)
 	assert.NotNil(tree.root)
-	assert.Equal(0, tree.root.n)
+	assert.Equal(uint32(0), tree.root.n)
 	assert.True(tree.root.isLeaf)
 }
 
 func TestFindNonExistingKeyEmptyTree(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	// Act
 	n, i, err := tree.Find(uint64(20), false)
@@ -30,14 +32,15 @@ func TestFindNonExistingKeyEmptyTree(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(tree.root, n)
-	assert.Equal(0, i)
+	assert.Equal(uint32(0), i)
 }
 
 func TestFindNonExistingKeyOnlyRoot(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	tree.root.n = 1
 	tree.root.keys[0] = 10
@@ -48,14 +51,15 @@ func TestFindNonExistingKeyOnlyRoot(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(tree.root, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -74,7 +78,7 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, leaf1)
 	tree.root.setChildAt(1, leaf2)
 
@@ -84,14 +88,15 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf2, n)
-	assert.Equal(2, i)
+	assert.Equal(uint32(2), i)
 }
 
 func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -110,7 +115,7 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, leaf1)
 	tree.root.setChildAt(1, leaf2)
 
@@ -120,14 +125,15 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf1, n)
-	assert.Equal(0, i)
+	assert.Equal(uint32(0), i)
 }
 
 func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -147,7 +153,7 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, leaf1)
 	tree.root.setChildAt(1, leaf2)
 
@@ -157,14 +163,15 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf1, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -191,7 +198,7 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, leaf1)
 	tree.root.setChildAt(1, leaf2)
 	tree.root.setChildAt(2, leaf3)
@@ -202,14 +209,15 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf2, n)
-	assert.Equal(1, i)
+	assert.Equal(uint32(1), i)
 }
 
 func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -233,7 +241,7 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 11
 	tree.root.keys[1] = 25
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, leaf1)
 	tree.root.setChildAt(1, leaf2)
 	tree.root.setChildAt(2, leaf3)
@@ -244,7 +252,7 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	// Assert
 	assert.Nil(err)
 	assert.Equal(leaf3, n)
-	assert.Equal(2, i)
+	assert.Equal(uint32(2), i)
 }
 
 func TestFindKeysMultipleInnerNodes(t *testing.T) {
@@ -257,7 +265,8 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	//       /    |    \          /    |    \
 	// (7  8)->(10 11)->(15 16) ---->17 20--->30 40
 
-	var tree *bTree = NewTree()
+	tree, err := NewTree(nil)
+	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
@@ -314,7 +323,7 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	tree.root.n = 1
 	tree.root.isLeaf = false
 	tree.root.keys[0] = 17
-	tree.root.children = make([]uint64, MAX_DEGREE+1)
+	tree.root.children = make([]uint64, tree.max_degree+1)
 	tree.root.setChildAt(0, inner1)
 	tree.root.setChildAt(1, inner2)
 
@@ -326,13 +335,13 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	// Assert
 	assert.Nil(err1)
 	assert.Equal(leaf5, n1)
-	assert.Equal(2, i1)
+	assert.Equal(uint32(2), i1)
 
 	assert.NotNil(err2)
 	assert.Equal(leaf3, n2)
-	assert.Equal(1, i2)
+	assert.Equal(uint32(1), i2)
 
 	assert.NotNil(err3)
 	assert.Equal(leaf4, n3)
-	assert.Equal(0, i3)
+	assert.Equal(uint32(0), i3)
 }

@@ -1,13 +1,21 @@
 package keyvaluestore
 
+import "os"
+
 type KeyValueStore struct {
 	tree *bTree
+	file *os.File
 }
 
-func New() *KeyValueStore {
-	return &KeyValueStore{
-		tree: NewTree(),
+func New(file *os.File) (*KeyValueStore, error) {
+	tree, err := NewTree(file)
+	if err != nil {
+		return nil, err
 	}
+	return &KeyValueStore{
+		tree: tree,
+		file: file,
+	}, nil
 }
 
 func (kv *KeyValueStore) Put(key uint64, value *[10]byte) error {
@@ -21,4 +29,23 @@ func (kv *KeyValueStore) Get(key uint64) ([10]byte, error) {
 	}
 
 	return val, nil
+}
+
+func (kv *KeyValueStore) Flush() error {
+	rootId, nextNodeId, memorySize, err := ReadFileHeader(kv.file)
+	if err != nil {
+		return err
+	}
+	if rootId != kv.tree.root.nodeId || nextNodeId != kv.tree.nextNodeId {
+		err = WriteFileHeader(kv.file, kv.tree.root.nodeId, kv.tree.nextNodeId, memorySize)
+		if err != nil {
+			return err
+		}
+	}
+
+	return kv.tree.buffer.Flush()
+}
+
+func (kv *KeyValueStore) CloseFile() error {
+	return kv.file.Close()
 }
