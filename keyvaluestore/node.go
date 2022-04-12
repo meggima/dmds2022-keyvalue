@@ -58,27 +58,8 @@ func (n *node) find(key uint64, errorIfExists bool) (*node, uint32, error) {
 	if n.isLeaf {
 		return n.findInLeaf(key, errorIfExists)
 	} else {
-		// Falls into the leftmost child
-		if key < n.keys[0] {
-			// The leftmost child always exists at this point
-			return n.getChildAt(0).find(key, errorIfExists)
-		}
 
-		// Falls into the rightmost child
-		if key >= n.keys[n.n-1] {
-			return n.getChildAt(n.n).find(key, errorIfExists)
-		}
-
-		// Falls into one of the intermediate children
-		var i uint32 = 1
-
-		for i < n.n {
-			if key >= n.keys[i] {
-				i++
-			} else {
-				break
-			}
-		}
+		i := n.findIndexForKey(key)
 
 		return n.getChildAt(i).find(key, errorIfExists)
 	}
@@ -99,17 +80,13 @@ func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, uint32, error)
 }
 
 func (n *node) findIndexForKey(key uint64) uint32 {
-	var i uint32 = 0
+	comparer := nonLeafKeyComparer
 
-	for i < n.n {
-		if key > n.keys[i] {
-			i++
-		} else {
-			break
-		}
+	if n.isLeaf {
+		comparer = leafKeyComparer
 	}
 
-	return i
+	return BinarySearch(key, &n.keys, n.n, comparer)
 }
 
 func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index uint32) error {
