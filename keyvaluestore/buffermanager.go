@@ -1,8 +1,13 @@
 package keyvaluestore
 
 const (
-	MEMORY_OVERHEAD  = uint64(16) // TODO: these are not correct yet
-	MEMORY_PER_ENTRY = uint64(16) // TODO: these are not correct yet
+	// Full leafs are < 10 KB and > 9KB, full inner nodes ~7KB
+	// We use a uniform size for entries of 10 KB. This wastes some memory
+	// but because we have no control over garbage collection in Go and because Go
+	// performs some magic during allocation of maps and slices we
+	// stay on the safe side.
+	// See the memstats_test.go file for allocation results.
+	MEMORY_PER_ENTRY = uint64(10_240)
 )
 
 type BufferManager interface {
@@ -65,12 +70,11 @@ func (bm *BufferManagerImpl) getFromDisk(nodeId uint64) (*node, error) {
 		return nil, nil
 	}
 
-	if bm.size == bm.capacity {
-		bm.removeLeastAccessedEntry()
-	}
+	err = bm.putIntoBuffer(bufferEntry)
 
-	bm.setAsMostRecentlyUsed(bufferEntry)
-	bm.buffer[nodeId] = bufferEntry
+	if err != nil {
+		return nil, err
+	}
 
 	return bufferEntry.node, nil
 }
@@ -82,18 +86,11 @@ func (bm *BufferManagerImpl) Put(node *node) error {
 		nextAccessedEntry:     nil,
 	}
 
-	if bm.size == bm.capacity {
-		err := bm.removeLeastAccessedEntry()
+	err := bm.putIntoBuffer(bufferEntry)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
-
-	bm.buffer[node.nodeId] = bufferEntry
-	bm.setAsMostRecentlyUsed(bufferEntry)
-
-	bm.size += 1
 
 	return nil
 }
@@ -109,6 +106,25 @@ func (bm *BufferManagerImpl) Flush() error {
 		bm.leastRecentlyAccessedEntry = bm.leastRecentlyAccessedEntry.nextAccessedEntry
 	}
 	bm.mostRecentlyAccessedEntry = nil
+	return nil
+}
+
+func (bm *BufferManagerImpl) putIntoBuffer(bufferEntry *BufferEntry) error {
+	var err error
+
+	if bm.size == bm.capacity {
+		err = bm.removeLeastAccessedEntry()
+	}
+
+	if err != nil {
+		return err
+	}
+
+	bm.buffer[bufferEntry.node.nodeId] = bufferEntry
+	bm.setAsMostRecentlyUsed(bufferEntry)
+
+	bm.size += 1
+
 	return nil
 }
 

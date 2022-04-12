@@ -6,12 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	PAGE_SIZE = 72 // Tree degree 2
+)
+
 func TestNewTreeShouldCreateTree(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
 	// Act
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 
 	// Assert
 	assert.Nil(err)
@@ -23,7 +27,7 @@ func TestNewTreeShouldCreateTree(t *testing.T) {
 func TestFindNonExistingKeyEmptyTree(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	// Act
@@ -39,7 +43,7 @@ func TestFindNonExistingKeyOnlyRoot(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	tree.root.n = 1
@@ -58,7 +62,7 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
@@ -95,7 +99,7 @@ func TestFindNonExistingSmallerKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
@@ -132,7 +136,7 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
@@ -170,7 +174,7 @@ func TestFindNonExistingBetweenKeyThreeLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
@@ -216,7 +220,7 @@ func TestFindNonExistingLargerKeyThreeLeaves(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()
@@ -265,7 +269,7 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	//       /    |    \          /    |    \
 	// (7  8)->(10 11)->(15 16) ---->17 20--->30 40
 
-	tree, err := NewTree(nil)
+	tree, err := NewTree(nil, PAGE_SIZE, DEFAULT_MEMORY_SIZE)
 	assert.Nil(err)
 
 	var leaf1 *node = tree.NewNode()

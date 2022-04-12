@@ -10,8 +10,17 @@ type NodeReader interface {
 }
 
 type NodeReaderImpl struct {
-	tree *bTree
-	file *os.File
+	file      *os.File
+	maxDegree uint32
+	pageSize  int
+}
+
+func NewNodeReader(file *os.File, maxDegree uint32, pageSize int) NodeReader {
+	return &NodeReaderImpl{
+		file:      file,
+		maxDegree: maxDegree,
+		pageSize:  pageSize,
+	}
 }
 
 func (reader *NodeReaderImpl) ReadNode(nodeId uint64) (*node, error) {
@@ -19,9 +28,8 @@ func (reader *NodeReaderImpl) ReadNode(nodeId uint64) (*node, error) {
 		return nil, nil
 	}
 
-	pageSize := os.Getpagesize()
-	bytes := make([]byte, os.Getpagesize())
-	_, err := reader.file.ReadAt(bytes, int64(nodeId)*int64(pageSize))
+	bytes := make([]byte, reader.pageSize)
+	_, err := reader.file.ReadAt(bytes, int64(nodeId)*int64(reader.pageSize))
 	if err != nil {
 		return nil, err
 	}
@@ -29,13 +37,13 @@ func (reader *NodeReaderImpl) ReadNode(nodeId uint64) (*node, error) {
 	var node *node = &node{
 		nodeId:   nodeId,
 		n:        0,
-		keys:     make([]uint64, reader.tree.max_degree),
-		values:   make([]*[10]byte, reader.tree.max_degree),
-		children: make([]uint64, reader.tree.max_degree+1),
+		keys:     make([]uint64, reader.maxDegree),
+		values:   make([]*[10]byte, reader.maxDegree),
+		children: make([]uint64, reader.maxDegree+1),
 		isLeaf:   false,
 		next:     0,
 		parent:   0,
-		tree:     reader.tree,
+		tree:     nil, // will be set by tree
 		isDirty:  false,
 	}
 
@@ -70,4 +78,10 @@ func (reader *NodeReaderImpl) ReadNode(nodeId uint64) (*node, error) {
 	}
 
 	return node, nil
+}
+
+type NullNodeReader struct{}
+
+func (reader *NullNodeReader) ReadNode(nodeId uint64) (*node, error) {
+	return nil, errors.New("not implemented")
 }

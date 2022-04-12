@@ -1,6 +1,7 @@
 package keyvaluestore
 
 import (
+	"fmt"
 	keyvaluestore "keyvaluestore/keyvaluestore/errors"
 	"os"
 )
@@ -12,7 +13,7 @@ const (
 type KeyValueStoreManager struct {
 }
 
-func (kv *KeyValueStoreManager) Create(directoryName string, memorySize uint64) error {
+func (kv *KeyValueStoreManager) Create(directoryName string) error {
 	if directoryName == "" {
 		// create in current directory
 		directoryName = "."
@@ -36,10 +37,10 @@ func (kv *KeyValueStoreManager) Create(directoryName string, memorySize uint64) 
 	rootId := uint64(1)
 	nextNodeId := uint64(1)
 
-	return WriteFileHeader(f, rootId, nextNodeId, memorySize)
+	return WriteFileHeader(f, rootId, nextNodeId)
 }
 
-func (kv *KeyValueStoreManager) Open(directoryName string) (KeyValueStoreAccessor, error) {
+func (kv *KeyValueStoreManager) Open(directoryName string, memorySize uint64) (KeyValueStoreAccessor, error) {
 	filepath := getStoreFileName(directoryName)
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		// file doesn't exists. throw error
@@ -49,8 +50,14 @@ func (kv *KeyValueStoreManager) Open(directoryName string) (KeyValueStoreAccesso
 	if err != nil {
 		return nil, err
 	}
+	if memorySize == 0 {
+		memorySize = DEFAULT_MEMORY_SIZE
+	}
+	if memorySize < DEFAULT_MEMORY_SIZE {
+		return nil, fmt.Errorf("memory size must be at least %d bytes", DEFAULT_MEMORY_SIZE)
+	}
 
-	kvStore, err := New(f)
+	kvStore, err := New(f, os.Getpagesize(), memorySize)
 	if err != nil {
 		return nil, err
 	}

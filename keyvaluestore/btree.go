@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	DEFAULT_MAX_DEGREE  = 226
-	DEFAULT_BUFFER_SIZE = 1000
+	DEFAULT_MAX_DEGREE  = 225
+	DEFAULT_MEMORY_SIZE = 10_485_760 // 10 MB
 
-	PAGE_SIZE_OVERHEAD_BYTES = 11
+	PAGE_SIZE_OVERHEAD_BYTES = 29
 	PAGE_SIZE_VARIABLE_BYTES = 18
 )
 
@@ -24,14 +24,14 @@ type bTree struct {
 	max_degree uint32
 }
 
-func NewTree(file *os.File) (*bTree, error) {
+func NewTree(file *os.File, pageSize int, memorySize uint64) (*bTree, error) {
 	var tree = &bTree{
 		nextNodeId: 1,
 		buffer:     nil,
-		max_degree: calculateTreeDegree(),
+		max_degree: calculateTreeDegree(pageSize),
 	}
 
-	err := tree.Init(file)
+	err := tree.Init(file, pageSize, memorySize)
 	if err != nil {
 		return nil, err
 	}
@@ -39,19 +39,27 @@ func NewTree(file *os.File) (*bTree, error) {
 	return tree, nil
 }
 
-func (t *bTree) Init(file *os.File) error {
-	reader := &NodeReaderImpl{file: file, tree: t}
+func (t *bTree) Init(file *os.File, pageSize int, memorySize uint64) error {
 	if file == nil {
-		// file is null, create an in-memory tree
-		t.buffer = NewBufferManager(DEFAULT_BUFFER_SIZE, reader, &NodeWriterImpl{file: file})
-		t.root = t.NewNode()
-		t.root.isLeaf = true
-		t.max_degree = DEFAULT_MAX_DEGREE
+		t.initEmpty(memorySize)
 		return nil
 	}
-	// existing tree - init from file
-	rootId, nextNodeId, memorySize, nil := ReadFileHeader(file)
-	t.buffer = NewBufferManager(calculateBufferSize(memorySize), reader, &NodeWriterImpl{file: file})
+
+	return t.initFromFile(file, pageSize, memorySize)
+}
+
+func (t *bTree) initEmpty(memorySize uint64) {
+	t.buffer = NewBufferManager(calculateBufferSize(memorySize), &NullNodeReader{}, &NullNodeWriter{})
+	t.root = t.NewNode()
+	t.root.isLeaf = true
+	t.max_degree = DEFAULT_MAX_DEGREE
+}
+
+func (t *bTree) initFromFile(file *os.File, pageSize int, memorySize uint64) error {
+	rootId, nextNodeId, _ := ReadFileHeader(file)
+	reader := NewNodeReader(file, t.max_degree, pageSize)
+	writer := NewNodeWriter(file, pageSize)
+	t.buffer = NewBufferManager(calculateBufferSize(memorySize), reader, writer)
 
 	if nextNodeId == 1 {
 		// new tree
@@ -61,6 +69,7 @@ func (t *bTree) Init(file *os.File) error {
 		t.nextNodeId = nextNodeId
 		var err error
 		t.root, err = reader.ReadNode(rootId)
+		t.root.tree = t
 		if err != nil {
 			return err
 		}
@@ -70,12 +79,11 @@ func (t *bTree) Init(file *os.File) error {
 }
 
 func calculateBufferSize(memorySize uint64) uint64 {
-	return uint64(math.Floor(float64(memorySize-MEMORY_OVERHEAD) / float64(MEMORY_PER_ENTRY)))
+	return uint64(math.Floor(float64(memorySize) / float64(MEMORY_PER_ENTRY)))
 }
 
-func calculateTreeDegree() uint32 {
-	ps := os.Getpagesize()
-	return uint32(math.Floor(float64(ps-PAGE_SIZE_OVERHEAD_BYTES) / PAGE_SIZE_VARIABLE_BYTES))
+func calculateTreeDegree(pageSize int) uint32 {
+	return uint32(math.Floor(float64(pageSize-PAGE_SIZE_OVERHEAD_BYTES) / PAGE_SIZE_VARIABLE_BYTES))
 }
 
 func (t *bTree) getNodeById(nodeId uint64) *node {
@@ -84,6 +92,7 @@ func (t *bTree) getNodeById(nodeId uint64) *node {
 	}
 
 	node, _ := t.buffer.Get(nodeId)
+	node.tree = t
 
 	return node
 }

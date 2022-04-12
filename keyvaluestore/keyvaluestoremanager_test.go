@@ -33,7 +33,7 @@ func TestCreateShouldReturnErrorWhenPathNotExists(t *testing.T) {
 	keyValueManager := KeyValueStoreManager{}
 
 	// Act
-	err := keyValueManager.Create("/some/not/existing/directory", 0)
+	err := keyValueManager.Create("/some/not/existing/directory")
 
 	// Assert
 	assert.ErrorIs(err, keyvaluestore.ErrDirectoryNotExists)
@@ -49,7 +49,7 @@ func TestCreateShouldCreateKeyValueStore(t *testing.T) {
 	keyValueManager := KeyValueStoreManager{}
 
 	// Act
-	err = keyValueManager.Create(home+"/kvstoremanagertest", 0)
+	err = keyValueManager.Create(home + "/kvstoremanagertest")
 
 	// Assert
 	assert.NoError(err)
@@ -64,7 +64,7 @@ func TestCreateShouldCreateKeyValueStoreInCurrentDirectoryWhenPathEmpty(t *testi
 	keyValueManager := KeyValueStoreManager{}
 
 	// Act
-	err := keyValueManager.Create("", 0)
+	err := keyValueManager.Create("")
 
 	// Assert
 	assert.NoError(err)
@@ -82,7 +82,7 @@ func TestCreateShouldReturnErrorWhenKeyValueStoreAlreadyExists(t *testing.T) {
 	assert.NoError(err)
 	assert.NoError(file.Close())
 	// Act
-	err = keyValueManager.Create(home+"/kvstoremanagertest", 0)
+	err = keyValueManager.Create(home + "/kvstoremanagertest")
 
 	// Assert
 	assert.ErrorIs(err, keyvaluestore.ErrStoreExists)
@@ -98,7 +98,7 @@ func TestOpenShouldReturnErrorWhenKeyValueStoreNotExists(t *testing.T) {
 	assert.Nil(err)
 
 	// Act
-	kv, err := keyValueManager.Open(home + "/kvstoremanagertest")
+	kv, err := keyValueManager.Open(home+"/kvstoremanagertest", DEFAULT_MEMORY_SIZE)
 
 	// Assert
 	assert.ErrorIs(err, keyvaluestore.ErrStoreNotExists)
@@ -112,10 +112,10 @@ func TestOpenShouldReturnStoreWhenStoreExists(t *testing.T) {
 	home, err := os.UserHomeDir()
 	assert.Nil(err)
 	keyValueManager := KeyValueStoreManager{}
-	_ = keyValueManager.Create(home+"/kvstoremanagertest", 0)
+	_ = keyValueManager.Create(home + "/kvstoremanagertest")
 
 	// Act
-	kv, err := keyValueManager.Open(home + "/kvstoremanagertest")
+	kv, err := keyValueManager.Open(home+"/kvstoremanagertest", DEFAULT_MEMORY_SIZE)
 
 	// Assert
 	assert.NoError(err)
@@ -131,8 +131,8 @@ func TestCloseShouldNotReturnError(t *testing.T) {
 	home, err := os.UserHomeDir()
 	assert.Nil(err)
 	keyValueManager := KeyValueStoreManager{}
-	_ = keyValueManager.Create(home+"/kvstoremanagertest", 0)
-	kv, _ := keyValueManager.Open(home + "/kvstoremanagertest")
+	_ = keyValueManager.Create(home + "/kvstoremanagertest")
+	kv, _ := keyValueManager.Open(home+"/kvstoremanagertest", DEFAULT_MEMORY_SIZE)
 
 	t.Cleanup(func() { kv.(*KeyValueStore).CloseFile() }) // close file, in case Close method fails
 
@@ -165,7 +165,7 @@ func TestDeleteShouldDeleteStoreWhenStoreExists(t *testing.T) {
 	home, err := os.UserHomeDir()
 	assert.Nil(err)
 	keyValueManager := KeyValueStoreManager{}
-	_ = keyValueManager.Create(home+"/kvstoremanagertest", 0)
+	_ = keyValueManager.Create(home + "/kvstoremanagertest")
 
 	// Act
 	err = keyValueManager.Delete(home + "/kvstoremanagertest")

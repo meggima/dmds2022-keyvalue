@@ -1,6 +1,7 @@
 package keyvaluestore
 
 import (
+	"errors"
 	"os"
 )
 
@@ -9,7 +10,15 @@ type NodeWriter interface {
 }
 
 type NodeWriterImpl struct {
-	file *os.File
+	file     *os.File
+	pageSize int
+}
+
+func NewNodeWriter(file *os.File, pageSize int) NodeWriter {
+	return &NodeWriterImpl{
+		file:     file,
+		pageSize: pageSize,
+	}
 }
 
 func (writer *NodeWriterImpl) WriteNode(node *node) error {
@@ -44,11 +53,16 @@ func (writer *NodeWriterImpl) WriteNode(node *node) error {
 
 	// fill rest of page with 0s
 
-	pageSize := os.Getpagesize()
-	free := pageSize - len(bytes)
+	free := writer.pageSize - len(bytes)
 	bytes = append(bytes, make([]byte, free)...)
 
-	_, err := writer.file.WriteAt(bytes, int64(id)*int64(pageSize))
+	_, err := writer.file.WriteAt(bytes, int64(id)*int64(writer.pageSize))
 
 	return err
+}
+
+type NullNodeWriter struct{}
+
+func (writer *NullNodeWriter) WriteNode(node *node) error {
+	return errors.New("not implemented")
 }

@@ -12,8 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const(
-	MEMORY_SIZE = 16384 // 16KB
+const (
 	NUMBER_OF_ENTRIES = 32768 // twice as much as there are memory bytes for the tree
 )
 
@@ -33,8 +32,8 @@ func setupStore(t *testing.T) (KeyValueStoreAccessor, error) {
 	}
 
 	keyValueManager := KeyValueStoreManager{}
-	keyValueManager.Create(home+"/kvstoretest/", MEMORY_SIZE) // 16KB
-	kv, err := keyValueManager.Open(home + "/kvstoretest/")
+	keyValueManager.Create(home + "/kvstoretest/")
+	kv, err := keyValueManager.Open(home+"/kvstoretest/", DEFAULT_MEMORY_SIZE)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +156,7 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 	assert.NoError(err)
 
 	var i uint64
-	for _, j := range rand.Perm(NUMBER_OF_ENTRIES+1) {
+	for _, j := range rand.Perm(NUMBER_OF_ENTRIES + 1) {
 		var val [10]byte
 		i = uint64(j)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
@@ -183,7 +182,7 @@ func TestInsertAndReadInRandomOrderWithReopen(t *testing.T) {
 	assert.NoError(err)
 
 	var i uint64
-	for _, j := range rand.Perm(NUMBER_OF_ENTRIES+1) {
+	for _, j := range rand.Perm(NUMBER_OF_ENTRIES + 1) {
 		var val [10]byte
 		i = uint64(j)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
@@ -198,7 +197,7 @@ func TestInsertAndReadInRandomOrderWithReopen(t *testing.T) {
 	keyValueManager.Close(kv)
 	home, err := os.UserHomeDir()
 	assert.NoError(err)
-	kv, err = keyValueManager.Open(home + "/kvstoretest/")
+	kv, err = keyValueManager.Open(home+"/kvstoretest/", DEFAULT_MEMORY_SIZE)
 	assert.NoError(err)
 
 	for i = 1; i <= NUMBER_OF_ENTRIES; i++ {

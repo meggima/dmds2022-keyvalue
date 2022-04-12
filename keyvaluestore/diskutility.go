@@ -41,7 +41,7 @@ func ToUInt64(val []byte) uint64 {
 	return binary.LittleEndian.Uint64(val)
 }
 
-func WriteFileHeader(f *os.File, rootId uint64, nextNodeId uint64, memorySize uint64) error {
+func WriteFileHeader(f *os.File, rootId uint64, nextNodeId uint64) error {
 	_, err := f.Write(ConvertUInt64(rootId))
 	if err != nil {
 		return err
@@ -50,29 +50,21 @@ func WriteFileHeader(f *os.File, rootId uint64, nextNodeId uint64, memorySize ui
 	if err != nil {
 		return err
 	}
-	_, err = f.Write(ConvertUInt64(memorySize))
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
 
-func ReadFileHeader(f *os.File) (rootId uint64, nextNodeId uint64, memorySize uint64, err error) {
+func ReadFileHeader(f *os.File) (rootId uint64, nextNodeId uint64, err error) {
 	rootId, err = ReadUInt64(f, 0)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, err
 	}
 	nextNodeId, err = ReadUInt64(f, 8)
 	if err != nil {
-		return 0, 0, 0, err
-	}
-	memorySize, err = ReadUInt64(f, 16)
-	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, err
 	}
 
-	return rootId, nextNodeId, memorySize, nil
+	return rootId, nextNodeId, nil
 }
 
 func ReadUInt64(f *os.File, offsetByte int64) (uint64, error) {

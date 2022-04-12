@@ -7,8 +7,8 @@ type KeyValueStore struct {
 	file *os.File
 }
 
-func New(file *os.File) (*KeyValueStore, error) {
-	tree, err := NewTree(file)
+func New(file *os.File, pageSize int, memorySize uint64) (*KeyValueStore, error) {
+	tree, err := NewTree(file, pageSize, memorySize)
 	if err != nil {
 		return nil, err
 	}
@@ -32,12 +32,12 @@ func (kv *KeyValueStore) Get(key uint64) ([10]byte, error) {
 }
 
 func (kv *KeyValueStore) Flush() error {
-	rootId, nextNodeId, memorySize, err := ReadFileHeader(kv.file)
+	rootId, nextNodeId, err := ReadFileHeader(kv.file)
 	if err != nil {
 		return err
 	}
 	if rootId != kv.tree.root.nodeId || nextNodeId != kv.tree.nextNodeId {
-		err = WriteFileHeader(kv.file, kv.tree.root.nodeId, kv.tree.nextNodeId, memorySize)
+		err = WriteFileHeader(kv.file, kv.tree.root.nodeId, kv.tree.nextNodeId)
 		if err != nil {
 			return err
 		}
