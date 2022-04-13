@@ -150,6 +150,21 @@ func TestInsertAndReadInCollapsingOrder(t *testing.T) {
 	}
 }
 
+// This test fails. There is still a problem in our implementation
+// when we put keys in random order.
+// As the in memory implementation seems to work without problem
+// (see test btree_test.TestPutRandomOrder) we believe that the issues
+// comes from the interaction of the btree with the buffer pool.
+// The buffer pool might possibly write nodes to disk that are in an
+// inconsistent state. Thus, upon reloading them from disk we run into
+// issues.
+// We also observed some strange behavior when interacting with the file.
+// It looks like the file is somehow being changed outside of our app.
+// Maybe there is a concurrency issue.
+//
+// As we did not have further time to spend we decided to hand in the current
+// state of the implementation which has some issues but at least has all
+// the key elements of a persistent in memory store implemented.
 func TestInsertAndReadInRandomOrder(t *testing.T) {
 	assert := assert.New(t)
 	kv, err := setupStore(t)
