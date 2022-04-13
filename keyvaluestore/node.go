@@ -179,12 +179,12 @@ func (n *node) splitNode() error {
 	var splitKey uint64
 
 	if n.isLeaf {
-		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
+		leftSize, rightSize := n.transplantHalfElementsTo(n.isLeaf, newNode)
 		n.n = leftSize
 		newNode.n = rightSize
 		splitKey = newNode.keys[0]
 	} else {
-		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
+		leftSize, rightSize := n.transplantHalfElementsTo(n.isLeaf, newNode)
 
 		// remove middle key, it isn't needed anymore
 		splitKey = newNode.keys[0]
@@ -216,9 +216,15 @@ func (n *node) splitNode() error {
 	return nil
 }
 
-func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN uint32, sizeNewNode uint32) {
+func (n *node) transplantHalfElementsTo(isLeaf bool, newNode *node) (sizeoldNodeN uint32, sizeNewNode uint32) {
 	sizeNewNode = 0
-	sizeoldNodeN = uint32(math.Floor(float64(n.n) / 2))
+
+	if isLeaf {
+		sizeoldNodeN = uint32(math.Floor(float64(n.n) / 2))
+	} else {
+		sizeoldNodeN = uint32(math.Ceil(float64(n.n) / 2))
+	}
+
 	for j := sizeoldNodeN; j < n.n; j++ {
 		newNode.keys[sizeNewNode] = n.keys[j]
 		newNode.values[sizeNewNode] = n.values[j]
