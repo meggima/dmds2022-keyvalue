@@ -1,6 +1,7 @@
 package keyvaluestore
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -349,20 +350,60 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	assert.Equal(uint32(0), i3)
 }
 
-func TestPut(t *testing.T) {
+func TestPutOrder(t *testing.T) {
 	// Arrange
 	assert := assert.New(t)
+	n := 100
 
 	tree, _ := NewTree(nil, 90, DEFAULT_MEMORY_SIZE)
 
 	// Act
-	for i := 20; i > 0; i-- {
+	for i := 1; i <= n; i++ {
 		tree.Put(uint64(i), createBytes(byte(i)))
-		tree.Print()
 	}
 
 	// Assert
-	for i := 20; i > 0; i-- {
+	for i := n; i > 0; i-- {
+		res, _ := tree.Get(uint64(i))
+
+		assert.Equal(*createBytes(byte(i)), res)
+	}
+}
+
+func TestPutReverseOrder(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	n := 100
+
+	tree, _ := NewTree(nil, 90, DEFAULT_MEMORY_SIZE)
+
+	// Act
+	for i := n; i > 0; i-- {
+		tree.Put(uint64(i), createBytes(byte(i)))
+	}
+
+	// Assert
+	for i := n; i > 0; i-- {
+		res, _ := tree.Get(uint64(i))
+
+		assert.Equal(*createBytes(byte(i)), res)
+	}
+}
+
+func TestPutRandomOrder(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	n := 1_000_000
+
+	tree, _ := NewTree(nil, 4096, DEFAULT_MEMORY_SIZE)
+
+	// Act
+	for _, j := range rand.Perm(n + 1) {
+		tree.Put(uint64(j), createBytes(byte(j)))
+	}
+
+	// Assert
+	for i := n; i > 0; i-- {
 		res, _ := tree.Get(uint64(i))
 
 		assert.Equal(*createBytes(byte(i)), res)
