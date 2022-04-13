@@ -169,7 +169,9 @@ func TestInsertAndReadInRandomOrder(t *testing.T) {
 	for i = 1; i <= NUMBER_OF_ENTRIES; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
-		assert.NoError(err)
+		if !assert.NoError(err) {
+			return
+		}
 		assert.NotNil(ret)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
 		assert.Equal(val, ret)
@@ -203,7 +205,9 @@ func TestInsertAndReadInRandomOrderWithReopen(t *testing.T) {
 	for i = 1; i <= NUMBER_OF_ENTRIES; i++ {
 		var val [10]byte
 		ret, err := kv.Get(i)
-		assert.NoError(err)
+		if !assert.NoError(err) {
+			return
+		}
 		assert.NotNil(ret)
 		copy(val[:], "Test"+strconv.FormatUint(i, 10))
 		assert.Equal(val, ret)
