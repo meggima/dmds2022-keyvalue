@@ -27,6 +27,8 @@ func (n *node) setChildAt(index uint32, node *node) {
 		n.children[index] = 0
 	} else {
 		n.children[index] = node.nodeId
+		node.parent = n.nodeId
+		node.isDirty = true
 	}
 }
 
@@ -179,27 +181,18 @@ func (n *node) splitNode() error {
 	var splitKey uint64
 
 	if n.isLeaf {
-		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
+		leftSize, rightSize := n.transplantHalfElementsTo(newNode,true)
 		n.n = leftSize
 		newNode.n = rightSize
 		splitKey = newNode.keys[0]
 	} else {
-		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
+		leftSize, rightSize := n.transplantHalfElementsTo(newNode,false)
 
 		// remove middle key, it isn't needed anymore
-		splitKey = newNode.keys[0]
-		n.keys[leftSize] = 0
+		splitKey = n.keys[leftSize-1]
+		n.keys[leftSize-1] = 0
 
-		// move the last child manually
-		lastChild := n.getChildAt(n.n)
-
-		if lastChild != nil {
-			newNode.setChildAt(rightSize, lastChild)
-			lastChild.setParent(newNode)
-			n.setChildAt(n.n, nil)
-		}
-
-		n.n = leftSize
+		n.n = leftSize-1
 		newNode.n = rightSize
 	}
 
@@ -211,28 +204,30 @@ func (n *node) splitNode() error {
 		// add new node to parent
 		return n.getParent().appendChildNode(splitKey, newNode)
 	} else {
-		n.tree.createNewRootWithChildren(n, newNode)
+		n.tree.createNewRootWithChildren(splitKey, n, newNode)
 	}
 	return nil
 }
 
-func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN uint32, sizeNewNode uint32) {
+func (n *node) transplantHalfElementsTo(newNode *node, isLeaf bool) (sizeoldNodeN uint32, sizeNewNode uint32) {
 	sizeNewNode = 0
-	sizeoldNodeN = uint32(math.Floor(float64(n.n) / 2))
+	if isLeaf {
+		sizeoldNodeN = uint32(math.Floor(float64(n.n) / 2))
+	} else {
+		sizeoldNodeN = uint32(math.Ceil(float64(n.n) / 2))
+	}
 	for j := sizeoldNodeN; j < n.n; j++ {
 		newNode.keys[sizeNewNode] = n.keys[j]
 		newNode.values[sizeNewNode] = n.values[j]
 		newNode.setChildAt(sizeNewNode, n.getChildAt(j))
-
-		if newNode.getChildAt(sizeNewNode) != nil {
-			newNode.getChildAt(sizeNewNode).setParent(newNode)
-		}
 
 		n.keys[j] = 0
 		n.values[j] = &[10]byte{}
 		n.setChildAt(j, nil)
 		sizeNewNode++
 	}
+	newNode.setChildAt(sizeNewNode, n.getChildAt(n.n))
+	n.setChildAt(n.n, nil)
 
 	return sizeoldNodeN, sizeNewNode
 }

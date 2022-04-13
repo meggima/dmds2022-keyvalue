@@ -135,13 +135,13 @@ func (t *bTree) Put(key uint64, value *[10]byte) error {
 	return err
 }
 
-func (t *bTree) createNewRootWithChildren(leftChild *node, rightChild *node) {
+func (t *bTree) createNewRootWithChildren(key uint64, leftChild *node, rightChild *node) {
 	// create new root
 	root := t.NewNode()
 	t.root = root
 	root.setChildAt(0, leftChild)
 	root.setChildAt(1, rightChild)
-	root.keys[0] = rightChild.keys[0]
+	root.keys[0] = key
 	root.n = 1
 	root.isDirty = true
 	leftChild.setParent(root)
@@ -179,6 +179,15 @@ func (t *bTree) Print() {
 			for ; i < n.n; i++ {
 				sb.WriteString(fmt.Sprint(n.keys[i]))
 				sb.WriteString(", ")
+			}
+			if !n.isLeaf {
+				sb.WriteString("((")
+				var i uint32 = 0
+				for ; i <= n.n; i++ {
+					sb.WriteString(fmt.Sprint(n.children[i]))
+					sb.WriteString(", ")
+				}
+				sb.WriteString("))")
 			}
 			sb.WriteString(" ],")
 

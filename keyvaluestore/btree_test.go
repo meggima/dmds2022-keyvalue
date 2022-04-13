@@ -141,10 +141,9 @@ func TestFindNonExistingBetweenKeyTwoLeaves(t *testing.T) {
 
 	var leaf1 *node = tree.NewNode()
 	leaf1.isLeaf = true
-	leaf1.n = 3
+	leaf1.n = 2
 	leaf1.keys[0] = 1
 	leaf1.keys[1] = 5
-	leaf1.keys[2] = 10
 
 	var leaf2 *node = tree.NewNode()
 	leaf2.isLeaf = true

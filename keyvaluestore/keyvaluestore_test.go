@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	NUMBER_OF_ENTRIES = 32768 // twice as much as there are memory bytes for the tree
+	NUMBER_OF_ENTRIES = 1000000 // 32768 // twice as much as there are memory bytes for the tree
 )
 
 func setupStore(t *testing.T) (KeyValueStoreAccessor, error) {
