@@ -68,7 +68,7 @@ func (n *node) find(key uint64, errorIfExists bool) (*node, uint32, error) {
 func (n *node) findInLeaf(key uint64, errorIfExists bool) (*node, uint32, error) {
 	i := n.findIndexForKey(key)
 
-	if n.keys[i] == key {
+	if i < n.n && n.keys[i] == key {
 		if errorIfExists {
 			return n, i, errors.New("key already exists")
 		} else {

@@ -75,7 +75,7 @@ func TestFindNonExistingLargerKeyTwoLeaves(t *testing.T) {
 	leaf2.isLeaf = true
 	leaf2.n = 2
 	leaf2.keys[0] = 11
-	leaf2.keys[0] = 20
+	leaf2.keys[1] = 20
 
 	leaf1.setNext(leaf2)
 

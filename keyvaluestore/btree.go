@@ -151,7 +151,7 @@ func (t *bTree) createNewRootWithChildren(leftChild *node, rightChild *node) {
 func (t *bTree) Get(key uint64) ([10]byte, error) {
 	n, i, _ := t.Find(key, false)
 
-	if n.isLeaf && n.keys[i] == key {
+	if n.isLeaf && i < n.n && n.keys[i] == key {
 		return (*n.values[i]), nil
 	}
 
