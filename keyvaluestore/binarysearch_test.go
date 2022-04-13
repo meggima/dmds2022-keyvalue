@@ -85,3 +85,57 @@ func TestBinarySearchEmptyArray(t *testing.T) {
 	// Assert
 	assert.Equal(uint32(0), res)
 }
+
+var bLeafTests = []struct {
+	searchKey     uint64
+	expectedIndex uint32
+}{
+	{1, 0},
+	{2, 0},
+	{10, 0},
+	{11, 1},
+	{20, 1},
+	{80, 7},
+	{81, 8},
+}
+
+func TestBinarySearchLeaf(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	var arr []uint64 = []uint64{10, 20, 30, 40, 50, 60, 70, 80}
+
+	for _, testData := range bLeafTests {
+		// Act
+		res := BinarySearch(testData.searchKey, &arr, 8, leafKeyComparer)
+
+		// Assert
+		assert.Equal(testData.expectedIndex, res)
+	}
+}
+
+var bNonLeafTests = []struct {
+	searchKey     uint64
+	expectedIndex uint32
+}{
+	{1, 0},
+	{2, 0},
+	{10, 1},
+	{11, 1},
+	{20, 2},
+	{80, 8},
+	{81, 8},
+}
+
+func TestBinarySearchNonLeaf(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+	var arr []uint64 = []uint64{10, 20, 30, 40, 50, 60, 70, 80}
+
+	for _, testData := range bNonLeafTests {
+		// Act
+		res := BinarySearch(testData.searchKey, &arr, 8, nonLeafKeyComparer)
+
+		// Assert
+		assert.Equal(testData.expectedIndex, res)
+	}
+}

@@ -349,3 +349,32 @@ func TestFindKeysMultipleInnerNodes(t *testing.T) {
 	assert.Equal(leaf4, n3)
 	assert.Equal(uint32(0), i3)
 }
+
+func TestPut(t *testing.T) {
+	// Arrange
+	assert := assert.New(t)
+
+	tree, _ := NewTree(nil, 90, DEFAULT_MEMORY_SIZE)
+
+	// Act
+	for i := 20; i > 0; i-- {
+		tree.Put(uint64(i), createBytes(byte(i)))
+		tree.Print()
+	}
+
+	// Assert
+	for i := 20; i > 0; i-- {
+		res, _ := tree.Get(uint64(i))
+
+		assert.Equal(*createBytes(byte(i)), res)
+	}
+}
+
+func createBytes(b byte) *[10]byte {
+	var bytes [10]byte
+	for i := 0; i < 10; i++ {
+		bytes[i] = b
+	}
+
+	return &bytes
+}

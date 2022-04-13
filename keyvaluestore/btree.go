@@ -49,10 +49,11 @@ func (t *bTree) Init(file *os.File, pageSize int, memorySize uint64) error {
 }
 
 func (t *bTree) initEmpty(memorySize uint64) {
-	t.buffer = NewBufferManager(calculateBufferSize(memorySize), &NullNodeReader{}, &NullNodeWriter{})
+	reader := NewMemoryNodeReaderWriter()
+	writer := reader
+	t.buffer = NewBufferManager(calculateBufferSize(memorySize), reader, writer)
 	t.root = t.NewNode()
 	t.root.isLeaf = true
-	t.max_degree = DEFAULT_MAX_DEGREE
 }
 
 func (t *bTree) initFromFile(file *os.File, pageSize int, memorySize uint64) error {
@@ -140,7 +141,7 @@ func (t *bTree) createNewRootWithChildren(leftChild *node, rightChild *node) {
 	t.root = root
 	root.setChildAt(0, leftChild)
 	root.setChildAt(1, rightChild)
-	root.keys[0] = rightChild.getLowestKeyInSubtree()
+	root.keys[0] = rightChild.keys[0]
 	root.n = 1
 	root.isDirty = true
 	leftChild.setParent(root)
@@ -169,6 +170,11 @@ func (t *bTree) Print() {
 		sb.WriteString("[")
 		for n != nil {
 			sb.WriteString("[ ")
+			sb.WriteString("(")
+			sb.WriteString(fmt.Sprint(n.nodeId))
+			sb.WriteString(":")
+			sb.WriteString(fmt.Sprint(n.parent))
+			sb.WriteString(") ")
 			var i uint32 = 0
 			for ; i < n.n; i++ {
 				sb.WriteString(fmt.Sprint(n.keys[i]))

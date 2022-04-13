@@ -102,9 +102,9 @@ func (n *node) insertValueToLeaf(key uint64, value *[10]byte, index uint32) erro
 
 		// node is over-full after insertion. try to shift the right-most key/value pair to the next node or split it
 		if n.n == n.tree.max_degree {
-			if n.getNext() != nil && n.getNext().n < n.tree.max_degree-1 {
-				return n.shiftRightmostElementToNext()
-			}
+			// if n.getNext() != nil && n.getNext().n < n.tree.max_degree-1 {
+			// 	return n.shiftRightmostElementToNext()
+			// }
 
 			return n.splitNode()
 		}
@@ -128,63 +128,76 @@ func (n *node) shiftElementsRightAndInsertKey(index uint32, key uint64, value *[
 	n.isDirty = true
 }
 
-func (n *node) shiftRightmostElementToNext() error {
-	if !n.isLeaf {
-		return errors.New("cannot shift on non-leaf nodes")
-	}
-	next := n.getNext()
+// func (n *node) shiftRightmostElementToNext() error {
+// 	if !n.isLeaf {
+// 		return errors.New("cannot shift on non-leaf nodes")
+// 	}
+// 	next := n.getNext()
 
-	for i := int(next.n); i >= 0; i-- {
-		next.keys[i+1] = next.keys[i]
-		next.values[i+1] = next.values[i]
-	}
-	next.keys[0] = n.keys[n.n-1]
-	next.values[0] = n.values[n.n-1]
-	n.keys[n.n-1] = 0
-	n.values[n.n-1] = &[10]byte{}
+// 	for i := int(next.n); i >= 0; i-- {
+// 		next.keys[i+1] = next.keys[i]
+// 		next.values[i+1] = next.values[i]
+// 	}
+// 	next.keys[0] = n.keys[n.n-1]
+// 	next.values[0] = n.values[n.n-1]
+// 	n.keys[n.n-1] = 0
+// 	n.values[n.n-1] = &[10]byte{}
 
-	n.n--
-	next.n++
-	next.isDirty = true
+// 	n.n--
+// 	next.n++
+// 	next.isDirty = true
 
-	return next.getParent().recalculateKeys()
-}
+// 	return next.getParent().recalculateKeys()
+// }
 
-func (n *node) recalculateKeys() error {
-	if n.isLeaf {
-		return errors.New("cannot recalculate keys on leaf nodes")
-	}
-	var i uint32 = 0
-	for ; i < n.n; i++ {
-		n.keys[i] = n.getChildAt(i + 1).getLowestKeyInSubtree()
-	}
-	n.isDirty = true
+// func (n *node) recalculateKeys() error {
+// 	if n.isLeaf {
+// 		return errors.New("cannot recalculate keys on leaf nodes")
+// 	}
+// 	var i uint32 = 0
+// 	for ; i < n.n; i++ {
+// 		child := n.getChildAt(i + 1)
+// 		if child != nil {
+// 			n.keys[i] = child.getLowestKeyInSubtree()
+// 		} else {
+// 			n.keys[i] = 0
+// 		}
+// 	}
+// 	n.isDirty = true
 
-	if n.getParent() != nil {
-		return n.getParent().recalculateKeys()
-	}
-	return nil
-}
+// 	if n.getParent() != nil {
+// 		return n.getParent().recalculateKeys()
+// 	}
+// 	return nil
+// }
 
 func (n *node) splitNode() error {
 	newNode := n.tree.NewNode()
 	newNode.isLeaf = n.isLeaf
 	newNode.isDirty = true
 
+	var splitKey uint64
+
 	if n.isLeaf {
 		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
 		n.n = leftSize
 		newNode.n = rightSize
+		splitKey = newNode.keys[0]
 	} else {
 		leftSize, rightSize := n.transplantHalfElementsTo(newNode)
 
 		// remove middle key, it isn't needed anymore
+		splitKey = newNode.keys[0]
 		n.keys[leftSize] = 0
 
 		// move the last child manually
-		newNode.setChildAt(rightSize, n.getChildAt(n.n))
-		newNode.getChildAt(rightSize).setParent(newNode)
-		n.setChildAt(n.n, nil)
+		lastChild := n.getChildAt(n.n)
+
+		if lastChild != nil {
+			newNode.setChildAt(rightSize, lastChild)
+			lastChild.setParent(newNode)
+			n.setChildAt(n.n, nil)
+		}
 
 		n.n = leftSize
 		newNode.n = rightSize
@@ -196,7 +209,7 @@ func (n *node) splitNode() error {
 
 	if n.getParent() != nil {
 		// add new node to parent
-		return n.getParent().appendChildNode(newNode)
+		return n.getParent().appendChildNode(splitKey, newNode)
 	} else {
 		n.tree.createNewRootWithChildren(n, newNode)
 	}
@@ -205,7 +218,7 @@ func (n *node) splitNode() error {
 
 func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN uint32, sizeNewNode uint32) {
 	sizeNewNode = 0
-	sizeoldNodeN = uint32(math.Ceil(float64(n.n) / 2))
+	sizeoldNodeN = uint32(math.Floor(float64(n.n) / 2))
 	for j := sizeoldNodeN; j < n.n; j++ {
 		newNode.keys[sizeNewNode] = n.keys[j]
 		newNode.values[sizeNewNode] = n.values[j]
@@ -224,15 +237,15 @@ func (n *node) transplantHalfElementsTo(newNode *node) (sizeoldNodeN uint32, siz
 	return sizeoldNodeN, sizeNewNode
 }
 
-func (n *node) getLowestKeyInSubtree() uint64 {
-	if n.isLeaf {
-		return n.keys[0]
-	} else {
-		return n.getChildAt(0).getLowestKeyInSubtree()
-	}
-}
+// func (n *node) getLowestKeyInSubtree() uint64 {
+// 	if n.isLeaf {
+// 		return n.keys[0]
+// 	} else {
+// 		return n.getChildAt(0).getLowestKeyInSubtree()
+// 	}
+// }
 
-func (n *node) appendChildNode(child *node) error {
+func (n *node) appendChildNode(key uint64, child *node) error {
 	if n.isLeaf {
 		return errors.New("cannot append child to leaf node")
 	}
@@ -242,8 +255,6 @@ func (n *node) appendChildNode(child *node) error {
 	}
 
 	if n.n < n.tree.max_degree {
-		key := child.getLowestKeyInSubtree()
-
 		// insert rightmost key/child
 		if key >= n.keys[n.n-1] {
 			n.keys[n.n] = key
