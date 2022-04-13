@@ -187,7 +187,7 @@ func (n *node) splitNode() error {
 		leftSize, rightSize := n.transplantHalfElementsTo(n.isLeaf, newNode)
 
 		// remove middle key, it isn't needed anymore
-		splitKey = newNode.keys[0]
+		splitKey = n.keys[leftSize-1]
 		n.keys[leftSize] = 0
 
 		// move the last child manually

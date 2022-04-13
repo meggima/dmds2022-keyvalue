@@ -141,7 +141,14 @@ func (t *bTree) createNewRootWithChildren(leftChild *node, rightChild *node) {
 	t.root = root
 	root.setChildAt(0, leftChild)
 	root.setChildAt(1, rightChild)
-	root.keys[0] = rightChild.keys[0]
+
+	if !leftChild.isLeaf {
+		root.keys[0] = leftChild.keys[leftChild.n-1]
+		leftChild.n -= 1
+		leftChild.keys[leftChild.n] = 0
+	} else {
+		root.keys[0] = rightChild.keys[0]
+	}
 	root.n = 1
 	root.isDirty = true
 	leftChild.setParent(root)
